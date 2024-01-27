@@ -1,0 +1,153 @@
+C51 COMPILER V9.60.0.0   SHOW                                                              06/09/2023 11:00:27 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SHOW
+OBJECT MODULE PLACED IN .\Objects\show.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE show.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\show.lst) TABS(2) OBJECT(.\Objects\show.obj)
+
+line level    source
+
+   1          #include "show.h"
+   2          
+   3          code unsigned char duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,
+   4                                       0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+   5                                       0x8e,0x89,0x88,0x8c};
+   6          //                             F    H    A    P
+   7          
+   8          unsigned char buffer[]={10,10,10,10,10,10,10,10};
+   9          unsigned char weixuan;
+  10          unsigned char show_mod,show_sequence;
+  11          extern unsigned char distance_danwei,frequency_danwei;
+  12          //测量量
+  13          extern unsigned int freq,frequency;
+  14          extern unsigned char himid,distance;
+  15          //参数
+  16          extern unsigned char himid_can;
+  17          extern unsigned char distance_can;
+  18          extern unsigned int frequence_can;
+  19          
+  20          
+  21          void display()
+  22          {
+  23   1          P0=0xff;
+  24   1          P2=(P2&0x1f)|0xe0;
+  25   1          P2&=0x1f;
+  26   1      
+  27   1          P0=1<<weixuan;
+  28   1          P2=(P2&0x1f)|0xc0;
+  29   1          P2&=0x1f; 
+  30   1      
+  31   1          P0=duanma[buffer[weixuan]];
+  32   1          P2=(P2&0x1f)|0xe0;
+  33   1          P2&=0x1f; 
+  34   1      
+  35   1          if(++weixuan==8){weixuan=0;}  
+  36   1      }
+  37          
+  38          void fen()
+  39          {
+  40   1          switch(show_mod)
+  41   1          {
+  42   2            case 0:show_frequency();break;
+  43   2            case 1:show_himid();break;
+  44   2            case 2:show_distance();break;
+  45   2            case 3:
+  46   2            {
+  47   3                switch(show_sequence)
+  48   3                {
+  49   4                  case 0:show_frequency_para();break;
+  50   4                  case 1:show_himid_para();break;
+  51   4                  case 2:show_distance_para();break;
+  52   4                }
+  53   3            }break;
+  54   2          }
+C51 COMPILER V9.60.0.0   SHOW                                                              06/09/2023 11:00:27 PAGE 2   
+
+  55   1      }
+  56          
+  57          void show_frequency()
+  58          {
+  59   1          if(frequency_danwei==0)
+  60   1          {
+  61   2              buffer[0]=22;buffer[1]=10;buffer[2]=10;
+  62   2              (frequency>10000)?(buffer[3]=frequency/10000):(buffer[3]=10);
+  63   2              (frequency>1000)?(buffer[4]=frequency%10000/1000):(buffer[4]=10);
+  64   2              (frequency>100)?(buffer[5]=frequency%1000/100):(buffer[5]=10);
+  65   2              buffer[6]=frequency%100/10;
+  66   2              buffer[7]=frequency%10;
+  67   2          }
+  68   1          else
+  69   1          {
+  70   2              buffer[0]=22;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+  71   2              buffer[5]=frequency/10000;
+  72   2              buffer[6]=frequency%10000/1000+11;
+  73   2              buffer[7]=frequency%1000/100;
+  74   2          }
+  75   1          
+  76   1      }
+  77          void show_himid()
+  78          {
+  79   1          buffer[0]=23;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  80   1          buffer[4]=10;buffer[5]=10;
+  81   1          buffer[6]=himid/10;
+  82   1          buffer[7]=himid%10;
+  83   1      }
+  84          void show_distance()
+  85          {
+  86   1          if(distance_danwei==0)
+  87   1          {
+  88   2              buffer[0]=24;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  89   2              buffer[4]=10;
+  90   2              (distance>100)?(buffer[5]=distance/100):(buffer[5]=10);
+  91   2              (distance>10)?(buffer[6]=distance%100/10):(buffer[6]=10);
+  92   2              buffer[7]=distance%10;
+  93   2          }
+  94   1          else
+  95   1          {
+  96   2              buffer[0]=24;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  97   2              buffer[4]=10;
+  98   2              buffer[5]=distance/100+11;
+  99   2              buffer[6]=distance%100/10;
+ 100   2              buffer[7]=distance%10;
+ 101   2          }
+ 102   1          
+ 103   1      }
+ 104          void show_frequency_para()
+ 105          {
+ 106   1          buffer[0]=25;buffer[1]=1;buffer[2]=10;buffer[3]=10;
+ 107   1          buffer[4]=10;
+ 108   1          (frequence_can>10000)?(buffer[5]=frequence_can/10000):(buffer[5]=10);
+ 109   1          buffer[6]=frequence_can%10000/1000+11;
+ 110   1          buffer[7]=frequence_can%1000/100;
+ 111   1      }
+ 112          void show_himid_para()
+ 113          {
+ 114   1          buffer[0]=25;buffer[1]=2;buffer[2]=10;buffer[3]=10;
+ 115   1          buffer[4]=10;buffer[5]=10;
+ 116   1          buffer[6]=himid_can/10;
+C51 COMPILER V9.60.0.0   SHOW                                                              06/09/2023 11:00:27 PAGE 3   
+
+ 117   1          buffer[7]=himid_can%10;
+ 118   1      }
+ 119          void show_distance_para()
+ 120          {
+ 121   1          buffer[0]=25;buffer[1]=3;buffer[2]=10;buffer[3]=10;
+ 122   1          buffer[4]=10;buffer[5]=10;
+ 123   1          buffer[6]=distance_can/100+11;
+ 124   1          buffer[7]=distance_can%100/10;
+ 125   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    714    ----
+   CONSTANT SIZE    =     26    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,224 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    01/05/2023  14:46:23  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+D:\STUDY\DANPIANJIXILIE\KEIL\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\IOSMG.obj TO .\Objects\IO模式的数码管扫描
+>> 显示 PRINT (.\Listings\IO模式的数码管扫描显示.m51) RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\STARTUP.obj (?C_STARTUP)
+  .\Objects\IOSMG.obj (IOSMG)
+  D:\STUDY\DANPIANJIXILIE\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  .\Objects\IO模式的数码管扫描显示 (?C_STARTUP)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     000AH     UNIT         ?DT?IOSMG
+            DATA    0012H     0001H     UNIT         _DATA_GROUP_
+                    0013H     000DH                  *** GAP ***
+            BIT     0020H.0   0000H.1   UNIT         ?BI?IOSMG
+                    0020H.1   0000H.7                *** GAP ***
+            IDATA   0021H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     0008H                  *** GAP ***
+            CODE    000BH     0003H     ABSOLUTE     
+            CODE    000EH     008CH     UNIT         ?C_C51STARTUP
+            CODE    009AH     004AH     UNIT         ?PR?DISPLAY?IOSMG
+            CODE    00E4H     0047H     UNIT         ?PR?ISR_TIMER_0?IOSMG
+            CODE    012BH     003EH     UNIT         ?PR?MAIN?IOSMG
+            CODE    0169H     0010H     UNIT         ?C_INITSEG
+            CODE    0179H     000FH     UNIT         ?PR?CLS_BUZZ?IOSMG
+            CODE    0188H     000FH     UNIT         ?PR?CLS_LED?IOSMG
+            CODE    0197H     000BH     UNIT         ?CO?IOSMG
+
+
+
+OVERLAY MAP OF MODULE:   .\Objects\IO模式的数码管扫描显示 (?C_STARTUP)
+
+
+SEGMENT                          DATA_GROUP 
+  +--> CALLED SEGMENT          START    LENGTH
+----------------------------------------------
+?C_C51STARTUP                  -----    -----
+  +--> ?PR?MAIN?IOSMG
+  +--> ?C_INITSEG
+
+?PR?MAIN?IOSMG                 0012H    0001H
+  +--> ?PR?CLS_BUZZ?IOSMG
+  +--> ?PR?CLS_LED?IOSMG
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/05/2023  14:46:23  PAGE 2
+
+
+*** NEW ROOT ***************************************************
+
+?PR?ISR_TIMER_0?IOSMG          -----    -----
+  +--> ?PR?DISPLAY?IOSMG
+
+?PR?DISPLAY?IOSMG              -----    -----
+  +--> ?CO?IOSMG
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\IO模式的数码管扫描显示 (?C_STARTUP)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        ?C_STARTUP
+  C:000EH         SEGMENT       ?C_C51STARTUP
+  I:0021H         SEGMENT       ?STACK
+  C:0000H         PUBLIC        ?C_STARTUP
+  D:00E0H         SYMBOL        ACC
+  D:00F0H         SYMBOL        B
+  D:0083H         SYMBOL        DPH
+  D:0082H         SYMBOL        DPL
+  N:0000H         SYMBOL        IBPSTACK
+  N:0100H         SYMBOL        IBPSTACKTOP
+  N:0080H         SYMBOL        IDATALEN
+  C:0011H         SYMBOL        IDATALOOP
+  N:0000H         SYMBOL        PBPSTACK
+  N:0100H         SYMBOL        PBPSTACKTOP
+  N:0000H         SYMBOL        PDATALEN
+  N:0000H         SYMBOL        PDATASTART
+  N:0000H         SYMBOL        PPAGE
+  N:0000H         SYMBOL        PPAGEENABLE
+  D:00A0H         SYMBOL        PPAGE_SFR
+  D:0081H         SYMBOL        SP
+  C:000EH         SYMBOL        STARTUP1
+  N:0000H         SYMBOL        XBPSTACK
+  N:0000H         SYMBOL        XBPSTACKTOP
+  N:0000H         SYMBOL        XDATALEN
+  N:0000H         SYMBOL        XDATASTART
+  C:0000H         LINE#         126
+  C:000EH         LINE#         133
+  C:0010H         LINE#         134
+  C:0011H         LINE#         135
+  C:0012H         LINE#         136
+  C:0014H         LINE#         185
+  C:0017H         LINE#         196
+  -------         ENDMOD        ?C_STARTUP
+
+  -------         MODULE        IOSMG
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  B:00A8H.7       PUBLIC        EA
+  D:000AH         PUBLIC        dspbuf
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/05/2023  14:46:23  PAGE 3
+
+
+  B:0020H.0       PUBLIC        temper_flag
+  D:00A8H         PUBLIC        IE
+  D:00B8H         PUBLIC        IP
+  C:012BH         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  C:0197H         PUBLIC        tab
+  D:008EH         PUBLIC        AUXR
+  B:00A8H.1       PUBLIC        ET0
+  B:0088H.5       PUBLIC        TF0
+  D:008CH         PUBLIC        TH0
+  D:008AH         PUBLIC        TL0
+  B:0088H.4       PUBLIC        TR0
+  C:0188H         PUBLIC        cls_led
+  C:00E4H         PUBLIC        isr_timer_0
+  D:00C8H         PUBLIC        T2CON
+  C:0179H         PUBLIC        cls_buzz
+  C:009AH         PUBLIC        display
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          MAIN
+  -------         DO            
+  D:0012H         SYMBOL        temperature
+  -------         ENDDO         
+  C:012BH         LINE#         30
+  C:012BH         LINE#         31
+  C:012BH         LINE#         32
+  C:012EH         LINE#         33
+  C:0131H         LINE#         34
+  C:0134H         LINE#         35
+  C:0137H         LINE#         36
+  C:013AH         LINE#         37
+  C:013DH         LINE#         38
+  C:0140H         LINE#         39
+  C:0142H         LINE#         40
+  C:0144H         LINE#         41
+  C:0146H         LINE#         42
+  C:0148H         LINE#         43
+  C:0148H         LINE#         44
+  C:0148H         LINE#         46
+  C:0150H         LINE#         47
+  C:015FH         LINE#         48
+  C:0167H         LINE#         49
+  -------         ENDPROC       MAIN
+  -------         PROC          ISR_TIMER_0
+  -------         DO            
+  D:0008H         SYMBOL        intr
+  -------         ENDDO         
+  C:00E4H         LINE#         53
+  C:0101H         LINE#         56
+  C:0109H         LINE#         57
+  C:0109H         LINE#         58
+  C:010BH         LINE#         59
+  C:010DH         LINE#         60
+  C:010DH         LINE#         61
+  C:0110H         LINE#         62
+  -------         ENDPROC       ISR_TIMER_0
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/05/2023  14:46:23  PAGE 4
+
+
+  -------         PROC          CLS_BUZZ
+  C:0179H         LINE#         64
+  C:0179H         LINE#         65
+  C:0179H         LINE#         66
+  C:0181H         LINE#         67
+  C:0184H         LINE#         68
+  C:0187H         LINE#         69
+  -------         ENDPROC       CLS_BUZZ
+  -------         PROC          CLS_LED
+  C:0188H         LINE#         70
+  C:0188H         LINE#         71
+  C:0188H         LINE#         72
+  C:0190H         LINE#         73
+  C:0193H         LINE#         74
+  C:0196H         LINE#         75
+  -------         ENDPROC       CLS_LED
+  -------         PROC          DISPLAY
+  -------         DO            
+  D:0009H         SYMBOL        dspcom
+  -------         ENDDO         
+  C:009AH         LINE#         78
+  C:009AH         LINE#         79
+  C:009AH         LINE#         81
+  C:00A2H         LINE#         82
+  C:00A5H         LINE#         83
+  C:00A8H         LINE#         85
+  C:00B7H         LINE#         86
+  C:00BFH         LINE#         87
+  C:00C2H         LINE#         89
+  C:00CEH         LINE#         90
+  C:00D6H         LINE#         91
+  C:00D9H         LINE#         93
+  C:00E1H         LINE#         94
+  C:00E3H         LINE#         95
+  C:00E3H         LINE#         96
+  -------         ENDPROC       DISPLAY
+  -------         ENDMOD        IOSMG
+
+Program Size: data=20.1 xdata=0 code=410
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

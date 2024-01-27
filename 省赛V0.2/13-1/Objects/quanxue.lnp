@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\hei.obj",
+".\Objects\ds1302.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\quanxue" 
+PRINT(".\Listings\quanxue.m51") RAMSIZE(256) 

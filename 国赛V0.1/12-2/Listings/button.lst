@@ -1,0 +1,97 @@
+C51 COMPILER V9.60.0.0   BUTTON                                                            05/28/2023 16:37:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BUTTON
+OBJECT MODULE PLACED IN .\Objects\button.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE button.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\button.lst) TABS(2) OBJECT(.\Objects\button.obj)
+
+line level    source
+
+   1          #include "button.h"
+   2          
+   3          extern unsigned char key_value;
+   4          extern unsigned char old_key_value;
+   5          
+   6          extern unsigned char qiehuan,shuju,canshu,jilu;
+   7          extern unsigned char sonic_mod_flag;
+   8          extern unsigned char miaoshu;
+   9          extern unsigned char dis_canshu;
+  10          
+  11          unsigned char read_key()
+  12          {
+  13   1        unsigned char key;
+  14   1        unsigned int zan;
+  15   1        
+  16   1        P3|=0x0f;
+  17   1        P44=0;P42=1;P35=1;P34=1;
+  18   1        zan=P3&0x0f;
+  19   1        P44=1;P42=0;P35=1;P34=1;
+  20   1        zan=(zan<<4)|(P3&0x0f);    
+  21   1        P44=1;P42=1;P35=0;P34=1;
+  22   1        zan=(zan<<4)|(P3&0x0f);
+  23   1        P44=1;P42=1;P35=1;P34=0;
+  24   1        zan=(zan<<4)|(P3&0x0f);
+  25   1        
+  26   1        switch(~zan)
+  27   1        {
+  28   2          case 0x1000:key=1;break;
+  29   2          case 0x0100:key=2;break;
+  30   2          case 0x0010:key=3;break;
+  31   2          case 0x0001:key=4;break;
+  32   2          case 0x2000:key=5;break;
+  33   2          case 0x0200:key=6;break;
+  34   2          case 0x0020:key=7;break;
+  35   2          case 0x0002:key=8;break;
+  36   2          case 0x4000:key=9;break;
+  37   2          case 0x0400:key=10;break;
+  38   2          case 0x0040:key=11;break;
+  39   2          case 0x0004:key=12;break;
+  40   2          case 0x8000:key=13;break;
+  41   2          case 0x0800:key=14;break;
+  42   2          case 0x0080:key=15;break;
+  43   2          case 0x0008:key=16;break;
+  44   2          default:key=0;break;
+  45   2        }
+  46   1        
+  47   1        return key;
+  48   1      }
+  49          
+  50          void key_proc()
+  51          {
+  52   1          switch(key_value)
+  53   1          {
+  54   2            case 13:qiehuan++;if(qiehuan==2){qiehuan=0;}break;
+C51 COMPILER V9.60.0.0   BUTTON                                                            05/28/2023 16:37:11 PAGE 2   
+
+  55   2            case 9:
+  56   2            {
+  57   3                if(qiehuan==0){shuju++;if(shuju==3){shuju=0;}}
+  58   3                if(qiehuan==1){canshu++;if(canshu==2){canshu=0;}}
+  59   3            }break;
+  60   2            case 14:
+  61   2            {
+  62   3                if(qiehuan==0&&shuju==1){sonic_mod_flag=~sonic_mod_flag;}
+  63   3                if(qiehuan==0&&shuju==2){jilu++;if(jilu==3){jilu=0;}}
+  64   3            }break;
+  65   2            case 10:
+  66   2            {
+  67   3                if(qiehuan==1&&canshu==0){miaoshu++;if(miaoshu==5){miaoshu=0;}}
+  68   3                if(qiehuan==1&&canshu==1){dis_canshu+=10;if(dis_canshu==90){dis_canshu=10;}}
+  69   3            }
+  70   2          }
+  71   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    416    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

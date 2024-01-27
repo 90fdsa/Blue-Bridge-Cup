@@ -1,0 +1,22 @@
+#include "show.h"
+
+code unsigned char duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,};
+unsigned char buffer[]={10,10,10,10,10,10,10,10};
+unsigned char weixuan;
+
+void display()
+{
+		P0=0xff;
+	  P2=(P2&0x1f)|0xe0;
+	  P2&=0x1f;
+	
+	  P0=1<<weixuan;
+	  P2=(P2&0x1f)|0xc0;
+	  P2&=0x1f;
+	
+	  P0=duanma[buffer[weixuan]];
+	  P2=(P2&0x1f)|0xe0;
+	  P2&=0x1f;
+	
+	  if(++weixuan==8){weixuan=0;}
+}

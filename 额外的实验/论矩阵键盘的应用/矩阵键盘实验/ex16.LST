@@ -1,0 +1,263 @@
+C51 COMPILER V9.60.0.0   EX16                                                              03/14/2023 13:40:05 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EX16
+OBJECT MODULE PLACED IN ex16.OBJ
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ex16.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TAB
+                    -S(2)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：矩阵键盘实验
+   3          * 实验目的：1.掌握矩阵键盘扫描的基本原理
+   4          *           2.掌握按键扫描及消除抖动的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：按下按键，数码管显示在0~15之间变化
+   7          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.转接板上使用P4.4和P4.2代替P3.6 P3.7
+   9          *       2.采用状态法进行按键扫描，系统实时性好，
+  10          *       且每10ms扫描可以防止抖动。
+  11          * 日期版本：2019-6-24/V2.0
+  12          *******************************************************************************/
+  13          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+  14          #include "absacc.h"
+  15          
+  16                                     //  0    1    2    3    4    5    6    7    8    9   熄灭
+  17          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xFF};
+  18          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  19          
+  20          bit key_flag = 0;//按键扫描标志位                                                                         
+             -                 
+  21          unsigned char key_value=0,old_key_value=0;//按键值
+  22          unsigned char led_1,led_2,led_3,Led_Flag;
+  23          unsigned char ok=0;
+  24          unsigned char done=0;
+  25          unsigned int chang = 0;
+  26          /******函数声明***********************/
+  27          void display();
+  28          unsigned char Key_Scan(); 
+  29          void key_proc_short();
+  30          void led_show();
+  31          void key_proc_long();
+  32          /************************************/
+  33          
+  34          void cls_buzz(void) //关闭蜂鸣器
+  35          {
+  36   1        P2 = (P2&0x1F|0xA0);
+  37   1        P0 = 0x00;
+  38   1        P2 &= 0x1F;
+  39   1      }
+  40          
+  41          void cls_led(void)//关闭所有LED
+  42          {
+  43   1        P2 = ((P2&0x1f)|0x80);
+  44   1        P0 = 0xff;  
+  45   1        P2 &= 0x1f;
+  46   1      }
+  47          
+  48          //主函数
+  49          void main(void)
+  50          {  
+  51   1        cls_buzz();
+  52   1        cls_led();
+  53   1        AUXR |= 0x80; //1T模式，IAP15F2K61S2单片机特殊功能寄存器  
+C51 COMPILER V9.60.0.0   EX16                                                              03/14/2023 13:40:05 PAGE 2   
+
+  54   1        TMOD &= 0xF0;
+  55   1        TL0 = 0xCD; 
+  56   1        TH0 = 0xD4; 
+  57   1        TF0 = 0;  
+  58   1        TR0 = 1;
+  59   1        ET0 = 1;
+  60   1        EA = 1;   
+  61   1          while(1)
+  62   1          {
+  63   2              //key_proc_short();
+  64   2              dspbuf[7] = key_value%10;
+  65   2              dspbuf[6] = key_value/10;
+  66   2      //        dspbuf[5] = ok%10;
+  67   2      //        dspbuf[4] = ok%100/10;
+  68   2      //        dspbuf[3] = ok/100;
+  69   2            
+  70   2              led_show();
+  71   2          }
+  72   1      }
+  73          
+  74          //定时器中断服务函数
+  75          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  76          {     
+  77   1        static unsigned char intr = 0;
+  78   1      
+  79   1        display(); //1ms执行一次
+  80   1        if(++intr == 10) 
+  81   1        {
+  82   2           intr = 0;
+  83   2           old_key_value=key_value;
+  84   2           key_value=Key_Scan();
+  85   2           if(old_key_value<key_value){key_proc_short();}//短按键
+  86   2           if(old_key_value>key_value){done=0;}//长按键，其实应该叫松手检测
+  87   2        }
+  88   1        if(key_value!=0)//这个ifelse是长按键部分
+  89   1        {
+  90   2           chang++;
+  91   2           if(chang>1000 & done==0){key_proc_long();}
+  92   2        }
+  93   1        else{chang=0;}
+  94   1      }
+  95          
+  96          unsigned char Key_Scan(void)
+  97          {
+  98   1        unsigned int Key_New;
+  99   1        unsigned char Key_Value;
+ 100   1        P3 |= 0x0F;
+ 101   1        P44 = 0; P42 = 1; P35 = 1; P34 = 1;  // 第一列
+ 102   1        Key_New = P3 & 0X0F;
+ 103   1        P44 = 1; P42 = 0; P35 = 1; P34 = 1;  // 第二列
+ 104   1        Key_New = (Key_New << 4) | (P3 & 0X0F); 
+ 105   1        P44 = 1; P42 = 1; P35 = 0; P34 = 1;  // 第三列
+ 106   1        Key_New = (Key_New << 4) | (P3 & 0X0F); 
+ 107   1        P44 = 1; P42 = 1; P35 = 1; P34 = 0;  // 第四列
+ 108   1        Key_New = (Key_New << 4) | (P3 & 0X0F); 
+ 109   1        switch(~Key_New)
+ 110   1        {
+ 111   2          case 0x8000: Key_Value = 13; break;
+ 112   2          case 0x4000: Key_Value = 9; break;
+ 113   2          case 0x2000: Key_Value = 5; break;
+ 114   2          case 0x1000: Key_Value = 1; break;    
+ 115   2          case 0x0800: Key_Value = 14; break;
+C51 COMPILER V9.60.0.0   EX16                                                              03/14/2023 13:40:05 PAGE 3   
+
+ 116   2          case 0x0400: Key_Value = 10; break;
+ 117   2          case 0x0200: Key_Value = 6; break;
+ 118   2          case 0x0100: Key_Value = 2; break;    
+ 119   2          case 0x0080: Key_Value = 15; break;
+ 120   2          case 0x0040: Key_Value = 11; break;
+ 121   2          case 0x0020: Key_Value = 7; break;
+ 122   2          case 0x0010: Key_Value = 3; break;      
+ 123   2          case 0x0008: Key_Value = 16; break;
+ 124   2          case 0x0004: Key_Value = 12; break;
+ 125   2          case 0x0002: Key_Value = 8; break;
+ 126   2          case 0x0001: Key_Value = 4; break;      
+ 127   2          default : Key_Value = 0;
+ 128   2        }
+ 129   1        return Key_Value;
+ 130   1      }
+ 131          
+ 132          
+ 133          //显示函数
+ 134          void display(void)
+ 135          {   
+ 136   1        static unsigned char dspcom = 0;
+ 137   1        //消除鬼影
+ 138   1        P0 = 0xff;
+ 139   1        P2 = ((P2&0x1f)|0xE0); 
+ 140   1        P2 &= 0x1f;
+ 141   1        //写位码
+ 142   1        P0 = 1<<dspcom;
+ 143   1        P2 = ((P2&0x1f)|0xC0); 
+ 144   1        P2 &= 0x1f;
+ 145   1        //写段码
+ 146   1        P0 = tab[dspbuf[dspcom]]; 
+ 147   1          P2 = ((P2&0x1f)|0xE0); 
+ 148   1        P2 &= 0x1f;
+ 149   1        
+ 150   1          if(++dspcom == 8){
+ 151   2              dspcom = 0;
+ 152   2          }    
+ 153   1      }
+ 154          
+ 155          void key_proc_short()
+ 156          {
+ 157   1        switch(key_value)
+ 158   1        {
+ 159   2          case 1://选择
+ 160   2          {
+ 161   3            led_1=~led_1;
+ 162   3            break;
+ 163   3          }
+ 164   2          case 2://存储
+ 165   2          {
+ 166   3            led_2=~led_2;
+ 167   3            break;
+ 168   3          }
+ 169   2          case 3:
+ 170   2          {
+ 171   3            led_3=~led_3;
+ 172   3            break;
+ 173   3          }
+ 174   2        }
+ 175   1      }
+ 176          
+ 177          void key_proc_long()
+C51 COMPILER V9.60.0.0   EX16                                                              03/14/2023 13:40:05 PAGE 4   
+
+ 178          {
+ 179   1        switch(key_value)
+ 180   1        {
+ 181   2          case 4://进入循环之后只做一次
+ 182   2          {
+ 183   3            led_2=~led_2;
+ 184   3            key_value=0;done=1;
+ 185   3            break;
+ 186   3          }
+ 187   2          case 5://进入循环之后一直做
+ 188   2          {
+ 189   3            led_1=~led_1;
+ 190   3            //key_value=0;done=1;
+ 191   3            break;
+ 192   3          }
+ 193   2        }
+ 194   1      }
+ 195          
+ 196          void led_show()
+ 197          {
+ 198   1          //led1
+ 199   1          if(led_1!=0)
+ 200   1          {
+ 201   2            Led_Flag |= 0x01;
+ 202   2          }
+ 203   1          else
+ 204   1          {
+ 205   2            Led_Flag &= 0xfe;
+ 206   2          }
+ 207   1        
+ 208   1          //led7
+ 209   1          if(led_2!=0)
+ 210   1          {
+ 211   2            Led_Flag |= 0x40;
+ 212   2          }
+ 213   1          else
+ 214   1          {
+ 215   2            Led_Flag &= 0xbf;
+ 216   2          }
+ 217   1        
+ 218   1          //led8
+ 219   1          if(led_3!=0)
+ 220   1          {
+ 221   2            Led_Flag |= 0x80;
+ 222   2          }
+ 223   1          else
+ 224   1          {
+ 225   2            Led_Flag &= 0x7f;
+ 226   2          }
+ 227   1          P0 = ~Led_Flag;
+ 228   1          P2 = ((P2&0x1f)|0x80);
+ 229   1          P2 &= 0x1f;
+ 230   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    670    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     20       1
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   EX16                                                              03/14/2023 13:40:05 PAGE 5   
+
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

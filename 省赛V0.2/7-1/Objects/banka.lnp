@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\qiannian.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\banka" 
+PRINT(".\Listings\banka.m51") RAMSIZE(256) 

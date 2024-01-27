@@ -1,0 +1,276 @@
+C51 COMPILER V9.60.0.0   QIANNIAN                                                          03/19/2023 17:22:46 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE QIANNIAN
+OBJECT MODULE PLACED IN .\Objects\qiannian.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE qiannian.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+                    - PRINT(.\Listings\qiannian.lst) TABS(2) OBJECT(.\Objects\qiannian.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"
+   2          #include "onewire.h"
+   3          
+   4          #define uchar unsigned char 
+   5          #define uint unsigned int 
+   6          
+   7          code unsigned char duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,0xbf,0xc6};
+   8          uchar buffer[]={10,10,10,10,10,10,10,10};
+   9          uint working_duty[]={200,500,700};
+  10          uchar working_time[]={0,60,120};
+  11          uchar working_teim=0;
+  12          uchar working_mod=0;
+  13          uchar start=0;
+  14          uchar time=0;
+  15          uchar weixuan=0;
+  16          uchar display_mod=0;
+  17          uchar LED;
+  18          float temperature=0;
+  19          
+  20          uchar key_value=0;
+  21          uchar old_key_value=0;
+  22          
+  23          void display();
+  24          void read_keyboard();
+  25          void key_proc();
+  26          void display1();
+  27          void display2();
+  28          void fen();
+  29          void led_show();
+  30          
+  31          void close_led()
+  32          {
+  33   1          P0=0xff;
+  34   1          P2=(P2&0x1f)|0x80;
+  35   1          P2&=0x1f;
+  36   1      }
+  37          
+  38          void close_buzz()
+  39          {
+  40   1          P0=0x00;
+  41   1          P2=(P2&0x1f)|0xa0;
+  42   1          P2&=0x1f;
+  43   1      }
+  44          
+  45          void Timer0Init(void)   //1000微秒@12.000MHz
+  46          {
+  47   1        AUXR &= 0x7F;   //定时器时钟12T模式
+  48   1        TMOD &= 0xF0;   //设置定时器模式
+  49   1        TL0 = 0x18;   //设置定时初值
+  50   1        TH0 = 0xFC;   //设置定时初值
+  51   1        TF0 = 0;    //清除TF0标志
+  52   1        TR0 = 1;    //定时器0开始计时
+  53   1        ET0 = 1;
+  54   1      }
+C51 COMPILER V9.60.0.0   QIANNIAN                                                          03/19/2023 17:22:46 PAGE 2   
+
+  55          
+  56          void Timer1Init(void)   //1微秒@12.000MHz
+  57          {
+  58   1        AUXR &= 0xBF;   //定时器时钟12T模式
+  59   1        TMOD &= 0x0F;   //设置定时器模式
+  60   1        TL1 = 0xFF;   //设置定时初值
+  61   1        TH1 = 0xFF;   //设置定时初值
+  62   1        TF1 = 0;    //清除TF1标志
+  63   1        TR1 = 1;    //定时器1开始计时
+  64   1        ET1 = 1;
+  65   1      }
+  66          
+  67          void main()
+  68          {
+  69   1          close_led();
+  70   1          close_buzz();
+  71   1          Timer0Init();
+  72   1          Timer1Init();
+  73   1          EA=1;
+  74   1          while(1)
+  75   1          {
+  76   2              fen();
+  77   2          }
+  78   1      }
+  79          
+  80          void timer0_proc() interrupt 1
+  81          {
+  82   1          static uchar intr=0;
+  83   1          static uint sec=0;
+  84   1          static uint tem_t=0;
+  85   1          if(++intr==10)
+  86   1          {
+  87   2              intr=0;
+  88   2              led_show();
+  89   2              old_key_value=key_value;
+  90   2              read_keyboard();
+  91   2              if(old_key_value<key_value){key_proc();}
+  92   2          }
+  93   1          if(++sec==1000)
+  94   1          {
+  95   2              sec=0;
+  96   2              if(time>0){time--;}
+  97   2          }
+  98   1          if(++tem_t==1000)
+  99   1          {
+ 100   2              tem_t=0;
+ 101   2              temperature=rd_temperature();
+ 102   2          }
+ 103   1          display();
+ 104   1      }
+ 105          
+ 106          void timer1_proc() interrupt 3
+ 107          {
+ 108   1          static unsigned int du=0;
+ 109   1          du++;
+ 110   1          if(time>0)
+ 111   1          {
+ 112   2              if(du>0 && du<working_duty[working_mod]){P34=1;}
+ 113   2              if(du>=du<working_duty[working_mod] && du<1000){P34=0;}
+ 114   2              if(du==1000){du=0;}
+ 115   2          }
+ 116   1      }
+C51 COMPILER V9.60.0.0   QIANNIAN                                                          03/19/2023 17:22:46 PAGE 3   
+
+ 117          
+ 118          void display()
+ 119          {
+ 120   1          P0=0xff;
+ 121   1          P2=(P2&0x1f)|0xdE0;
+ 122   1          P2&=0x1f;
+ 123   1        
+ 124   1          P0=1<<weixuan;
+ 125   1          P2=(P2&0x1f)|0xC0;
+ 126   1          P2&=0x1f;
+ 127   1          
+ 128   1          P0=duanma[buffer[weixuan]];
+ 129   1          P2=(P2&0x1f)|0xE0;
+ 130   1          P2&=0x1f;
+ 131   1        
+ 132   1          weixuan++;
+ 133   1          if(weixuan==8){weixuan=0;}
+ 134   1      }
+ 135          
+ 136          void read_keyboard()
+ 137          {
+ 138   1          uint key_zan;
+ 139   1          
+ 140   1          P3|=0x0f;
+ 141   1          P44=0;P42=1;P35=1;P34=1;
+ 142   1          key_zan=P3&0x0f;
+ 143   1          P44=1;P42=0;P35=1;P34=1;
+ 144   1          key_zan=(key_zan<<4)|(P3&0x0f);
+ 145   1          P44=1;P42=1;P35=0;P34=1;
+ 146   1          key_zan=(key_zan<<4)|(P3&0x0f);
+ 147   1          P44=1;P42=1;P35=1;P34=0;
+ 148   1          key_zan=(key_zan<<4)|(P3&0x0f);
+ 149   1          
+ 150   1          switch(~key_zan)
+ 151   1          {
+ 152   2            case 0x1000:key_value=1;break;
+ 153   2            case 0x0100:key_value=2;break;
+ 154   2            case 0x0010:key_value=3;break;
+ 155   2            case 0x0001:key_value=4;break;
+ 156   2            case 0x2000:key_value=5;break;
+ 157   2            case 0x0200:key_value=6;break;
+ 158   2            case 0x0020:key_value=7;break;
+ 159   2            case 0x0002:key_value=8;break;
+ 160   2            case 0x4000:key_value=9;break;
+ 161   2            case 0x0400:key_value=10;break;
+ 162   2            case 0x0040:key_value=11;break;
+ 163   2            case 0x0004:key_value=12;break;
+ 164   2            case 0x8000:key_value=13;break;
+ 165   2            case 0x0800:key_value=14;break;
+ 166   2            case 0x0080:key_value=15;break;
+ 167   2            case 0x0008:key_value=16;break;
+ 168   2            default:key_value=0;break;
+ 169   2          }
+ 170   1      }
+ 171          
+ 172          void key_proc()
+ 173          {
+ 174   1          switch(key_value)
+ 175   1          {
+ 176   2            case 13://S4
+ 177   2            {
+ 178   3                working_mod++;
+C51 COMPILER V9.60.0.0   QIANNIAN                                                          03/19/2023 17:22:46 PAGE 4   
+
+ 179   3                if(working_mod==3){working_mod=0;}
+ 180   3            }break;
+ 181   2            case 9://S5
+ 182   2            {
+ 183   3                working_teim++;
+ 184   3                if(working_teim==3){working_teim=0;}
+ 185   3                time=working_time[working_teim];
+ 186   3            }break;
+ 187   2            case 10://S9
+ 188   2            {
+ 189   3                time=0;
+ 190   3            }break;
+ 191   2            case 14://S8
+ 192   2            {
+ 193   3                display_mod=~display_mod;
+ 194   3            }break;
+ 195   2          }
+ 196   1      }
+ 197          
+ 198          void fen()
+ 199          {
+ 200   1          if(display_mod==0){display1();}
+ 201   1          else{display2();}
+ 202   1      }
+ 203          
+ 204          void display1()
+ 205          {
+ 206   1          buffer[0]=11;
+ 207   1          buffer[1]=working_mod+1;
+ 208   1          buffer[2]=11;
+ 209   1          buffer[3]=10;
+ 210   1          buffer[4]=time/1000;
+ 211   1          buffer[5]=time%1000/100;
+ 212   1          buffer[6]=time%100/10;
+ 213   1          buffer[7]=time%10;
+ 214   1      }
+ 215          
+ 216          void display2()
+ 217          {
+ 218   1          buffer[0]=11;
+ 219   1          buffer[1]=4;
+ 220   1          buffer[2]=11;
+ 221   1          buffer[3]=10;
+ 222   1          buffer[4]=10;
+ 223   1          buffer[5]=((char)temperature)/10;
+ 224   1          buffer[6]=((char)temperature)%10;
+ 225   1          buffer[7]=12;
+ 226   1      }
+ 227          
+ 228          void led_show()
+ 229          {
+ 230   1          if(time>0)
+ 231   1          {
+ 232   2              if(working_mod==0){LED&=0xfe;}
+ 233   2              else{LED|=0x01;}
+ 234   2              if(working_mod==1){LED&=0xfd;}
+ 235   2              else{LED|=0x02;}
+ 236   2              if(working_mod==2){LED&=0xfb;}
+ 237   2              else{LED|=0x04;}
+ 238   2          }
+ 239   1          else{LED=0xff;}
+ 240   1          
+C51 COMPILER V9.60.0.0   QIANNIAN                                                          03/19/2023 17:22:46 PAGE 5   
+
+ 241   1          P0=LED;
+ 242   1          P2=(P2&0x1f)|0x80;
+ 243   1          P2&=0x1f;
+ 244   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    986    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     37    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

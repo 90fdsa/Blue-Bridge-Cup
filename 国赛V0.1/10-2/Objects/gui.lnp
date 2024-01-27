@@ -1,0 +1,12 @@
+".\Objects\STARTUP.obj",
+".\Objects\gui.obj",
+".\Objects\init.obj",
+".\Objects\display.obj",
+".\Objects\key.obj",
+".\Objects\onewire.obj",
+".\Objects\ultrasonic.obj",
+".\Objects\iic.obj",
+".\Objects\led.obj",
+".\Objects\series.obj" 
+TO ".\Objects\gui" 
+PRINT(".\Listings\gui.m51") RAMSIZE(256) 

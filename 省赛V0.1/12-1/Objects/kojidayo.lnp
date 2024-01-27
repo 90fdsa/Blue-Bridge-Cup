@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\kokodayo.obj",
+".\Objects\onewire.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\kojidayo" 
+PRINT(".\Listings\kojidayo.m51") RAMSIZE(256) 

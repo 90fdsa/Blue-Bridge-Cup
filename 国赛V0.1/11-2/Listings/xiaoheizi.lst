@@ -1,0 +1,122 @@
+C51 COMPILER V9.54   XIAOHEIZI                                                             06/01/2023 16:58:55 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE XIAOHEIZI
+OBJECT MODULE PLACED IN .\Objects\xiaoheizi.obj
+COMPILER INVOKED BY: D:\KEIL5_MDK\C51\BIN\C51.EXE xiaoheizi.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listin
+                    -gs\xiaoheizi.lst) TABS(2) OBJECT(.\Objects\xiaoheizi.obj)
+
+line level    source
+
+   1          #include "stc15f2k60s2.h"
+   2          #include "init.h"
+   3          #include "show.h"
+   4          #include "key.h"
+   5          #include "ds1302.h"
+   6          #include "onewire.h"
+   7          #include "iic.h"
+   8          #include "led.h"
+   9          
+  10          extern unsigned char ho;
+  11          extern unsigned char led1,led2,led3,ledn;
+  12          extern unsigned char led3_aux;
+  13          
+  14          unsigned char key_value,old_key_value;
+  15          unsigned char tem_flag;
+  16          //变量值
+  17          float temperature,voltage;
+  18          unsigned char adc_value,liangmie;
+  19          //参数
+  20          char shi_can=17;
+  21          char tem_can=25;
+  22          unsigned char led_can=4;
+  23          void tem_start();
+  24          
+  25          void main()
+  26          {
+  27   1         close_buzz();
+  28   1         close_led();
+  29   1         pcf8591_init();
+  30   1         set_time(16,59,50);
+  31   1         Timer1Init();
+  32   1         EA=1;
+  33   1         while(1)
+  34   1         {
+  35   2            fen();
+  36   2            tem_start();
+  37   2            led_pan();
+  38   2         }     
+  39   1      }
+  40          
+  41          void timer1_proc() interrupt 3
+  42          {
+  43   1          static unsigned char a;
+  44   1          static unsigned int tem;
+  45   1          static unsigned char ad;
+  46   1          static unsigned int led3a;
+  47   1          static unsigned int led3b;
+  48   1          display();
+  49   1          if(++a==10)
+  50   1          {
+  51   2              a=0;
+  52   2              old_key_value=key_value;
+  53   2              key_value=read_key();
+  54   2              if(old_key_value<key_value){key_proc();}
+C51 COMPILER V9.54   XIAOHEIZI                                                             06/01/2023 16:58:55 PAGE 2   
+
+  55   2              led_run();
+  56   2          }
+  57   1          if(++ad==50)
+  58   1          {
+  59   2              ad=0; 
+  60   2              adc_value=pcf8591_adc();
+  61   2              voltage=adc_value*0.0196;
+  62   2              if(adc_value<30){liangmie=1;}else{liangmie=0;}
+  63   2          }
+  64   1          if(++tem==300)
+  65   1          {
+  66   2              tem=0;
+  67   2              tem_flag=1;
+  68   2          }
+  69   1          if(liangmie==1)
+  70   1          {
+  71   2              led3b=0;
+  72   2              if(++led3a==3000)
+  73   2              {
+  74   3                  led3a=0;
+  75   3                  led3_aux=1;
+  76   3              }
+  77   2          }
+  78   1          if(liangmie==0)
+  79   1          {
+  80   2              led3a=0;
+  81   2              if(++led3b==3000)
+  82   2              {
+  83   3                  led3b=0;
+  84   3                  led3_aux=0;
+  85   3              }
+  86   2          }
+  87   1      }
+  88          
+  89          void tem_start()
+  90          {
+  91   1          if(tem_flag==1)
+  92   1          {
+  93   2              tem_flag=0;
+  94   2              temperature=rd_temperature();
+  95   2          }
+  96   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    296    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     24    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

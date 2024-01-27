@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\gf.obj" 
+TO ".\Objects\adfg" 
+PRINT(".\Listings\adfg.m51") RAMSIZE(256) 

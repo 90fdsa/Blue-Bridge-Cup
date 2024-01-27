@@ -1,0 +1,114 @@
+C51 COMPILER V9.60.0.0   SAF                                                               05/28/2023 19:35:35 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SAF
+OBJECT MODULE PLACED IN .\Objects\saf.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE saf.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\saf.lst) TABS(2) OBJECT(.\Objects\saf.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.h"
+   2          #include "init.h"
+   3          #include "show.h"
+   4          #include "button.h"
+   5          #include "ds1302.h"
+   6          #include "ultrasonic.h"
+   7          #include "iic.h"
+   8          #include "led.h"
+   9          
+  10          unsigned char period[]={2,3,5,7,9};
+  11          
+  12          extern unsigned char sonic_mod_flag;
+  13          extern unsigned char h,m,s;
+  14          extern unsigned char miaoshu;
+  15          
+  16          
+  17          unsigned char key_value,old_key_value;
+  18          unsigned char distance;
+  19          unsigned char adc_value,old_adc_value;
+  20          unsigned char now_second,new_second,old_second;
+  21          unsigned char sonic_time=0;
+  22          unsigned char max,min,xiangjiawei=0;
+  23          unsigned int sum;
+  24          float average;
+  25          
+  26          
+  27          void main()
+  28          {
+  29   1          close_buzz();
+  30   1          close_led();
+  31   1          set_time(15,0,0);
+  32   1          pcf8591_init();
+  33   1          Timer1Init();
+  34   1          EA=1;
+  35   1          while(1)
+  36   1          {
+  37   2              fen();
+  38   2              now_second=Read_Ds1302_Byte(0x81);
+  39   2          }
+  40   1      }
+  41          
+  42          void Timer1_proc() interrupt 3
+  43          {
+  44   1          static unsigned char a;
+  45   1          display();
+  46   1          led();
+  47   1          if(++a==10)
+  48   1          {
+  49   2              a=0;
+  50   2            
+  51   2              old_key_value=key_value;
+  52   2              key_value=read_key();
+  53   2              if(old_key_value<key_value){key_proc();}
+  54   2              
+C51 COMPILER V9.60.0.0   SAF                                                               05/28/2023 19:35:35 PAGE 2   
+
+  55   2              //Dac计算
+  56   2              if(distance<=10){pcf8591_dac(51);}
+  57   2              if(distance>=80){pcf8591_dac(255);}
+  58   2              if(distance>10&distance<80){pcf8591_dac((distance-10)*2.91+51);}
+  59   2              
+  60   2              //测量距离
+  61   2              if(sonic_mod_flag==0)
+  62   2              {
+  63   3                  old_adc_value=adc_value;
+  64   3                  adc_value=pcf8591_adc();
+  65   3                  if(old_adc_value>20&adc_value<20){distance=sonic();sonic_time++;xiangjiawei=1;}
+  66   3              }
+  67   2              if(sonic_mod_flag!=0)
+  68   2              {
+  69   3                  old_second=new_second;
+  70   3                  new_second=now_second/16*10+now_second%16;
+  71   3                  if((new_second%period[miaoshu]==0)&&(old_second%period[0]!=0))
+  72   3                  {distance=sonic();sonic_time++;xiangjiawei=1;}  
+  73   3              }
+  74   2              //计算最大值那三个
+  75   2              if(sonic_time==1){max=distance;min=distance;average=distance;sum=distance;xiangjiawei=0;}
+  76   2              if(sonic_time>1)
+  77   2              {
+  78   3                  if(distance>=max){max=distance;}
+  79   3                  if(distance<=min){min=distance;}
+  80   3                  if(xiangjiawei==1)
+  81   3                  {
+  82   4                      sum=sum+distance;
+  83   4                      average=sum/sonic_time;
+  84   4                      xiangjiawei=0;
+  85   4                  }
+  86   3              }
+  87   2          }
+  88   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    471    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     24    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

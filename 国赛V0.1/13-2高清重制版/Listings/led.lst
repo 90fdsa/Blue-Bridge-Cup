@@ -1,0 +1,65 @@
+C51 COMPILER V9.60.0.0   LED                                                               06/09/2023 11:00:28 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          
+   3          unsigned char led1,led2,led3,led4,led5,led6;
+   4          unsigned char qi1,qi2,qi3;
+   5          unsigned char aux1,aux2,aux3;
+   6          //测量量
+   7          extern unsigned int freq,frequency;
+   8          extern unsigned char himid,distance;
+   9          //参数
+  10          extern unsigned char himid_can;
+  11          extern unsigned char distance_can;
+  12          extern unsigned int frequence_can;
+  13          extern unsigned char show_mod,show_sequence;
+  14          
+  15          void led_pan()
+  16          {
+  17   1          if(show_mod==0){led1=1;}else{led1=0;}
+  18   1          if(show_mod==1){led2=1;}else{led2=0;}
+  19   1          if(show_mod==2){led3=1;}else{led3=0;}
+  20   1          if(frequency>frequence_can){led4=1;}else{led4=0;}
+  21   1          if(himid>himid_can){led5=1;}else{led5=0;}
+  22   1          if(distance>distance_can){led6=1;}else{led6=0;}
+  23   1          if(show_mod==3&show_sequence==0){qi1=1;}else{qi1=0;}
+  24   1          if(show_mod==3&show_sequence==1){qi2=1;}else{qi2=0;}
+  25   1          if(show_mod==3&show_sequence==2){qi3=1;}else{qi3=0;}
+  26   1      }
+  27          void led()
+  28          {
+  29   1          unsigned char c;
+  30   1          if(led1==1|aux1!=0){c|=0x01;}else{c&=0xfe;}
+  31   1          if(led2==1|aux2!=0){c|=0x02;}else{c&=0xfd;}
+  32   1          if(led3==1|aux3!=0){c|=0x04;}else{c&=0xfb;}
+  33   1          if(led4==1){c|=0x08;}else{c&=0xf7;}
+  34   1          if(led5==1){c|=0x10;}else{c&=0xef;}
+  35   1          if(led6==1){c|=0x20;}else{c&=0xdf;}
+  36   1          c&=0xbf;c&=0x7f;
+  37   1          
+  38   1          P0=~c;
+  39   1          P2=(P2&0x1f)|0x80;
+  40   1          P2&=0x1f;
+  41   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    370    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

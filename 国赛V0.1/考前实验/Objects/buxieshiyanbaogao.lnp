@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\zhu.obj",
+".\Objects\show.obj",
+".\Objects\init.obj" 
+TO ".\Objects\buxieshiyanbaogao" 
+PRINT(".\Listings\buxieshiyanbaogao.m51") RAMSIZE(256) 

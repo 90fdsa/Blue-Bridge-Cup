@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\hao.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\the_last_day" 
+PRINT(".\Listings\the_last_day.m51") RAMSIZE(256) 

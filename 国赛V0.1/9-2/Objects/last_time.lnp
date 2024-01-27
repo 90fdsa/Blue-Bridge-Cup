@@ -1,0 +1,10 @@
+".\Objects\STARTUP.obj",
+".\Objects\ketan.obj",
+".\Objects\show.obj",
+".\Objects\key.obj",
+".\Objects\init.obj",
+".\Objects\iic.obj",
+".\Objects\onewire.obj",
+".\Objects\led.obj" 
+TO ".\Objects\last_time" 
+PRINT(".\Listings\last_time.m51") RAMSIZE(256) 

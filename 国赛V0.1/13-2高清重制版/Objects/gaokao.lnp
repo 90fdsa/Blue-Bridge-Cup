@@ -1,0 +1,11 @@
+".\Objects\STARTUP.obj",
+".\Objects\gaokao.obj",
+".\Objects\init.obj",
+".\Objects\key.obj",
+".\Objects\show.obj",
+".\Objects\iic.obj",
+".\Objects\ultrasonic.obj",
+".\Objects\jidianqi.obj",
+".\Objects\led.obj" 
+TO ".\Objects\gaokao" 
+PRINT(".\Listings\gaokao.m51") RAMSIZE(256) 

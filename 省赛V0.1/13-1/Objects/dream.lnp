@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\ocean.obj",
+".\Objects\onewire.obj",
+".\Objects\ds1302.obj" 
+TO ".\Objects\dream" 
+PRINT(".\Listings\dream.m51") RAMSIZE(256) 

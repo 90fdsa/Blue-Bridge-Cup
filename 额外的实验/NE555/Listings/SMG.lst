@@ -1,0 +1,70 @@
+C51 COMPILER V9.60.0.0   SMG                                                               04/05/2023 19:23:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SMG
+OBJECT MODULE PLACED IN .\Objects\SMG.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE SMG.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\SMG.lst) TABS(2) OBJECT(.\Objects\SMG.obj)
+
+line level    source
+
+   1          #include "SMG.h"
+   2          
+   3          void Select573(unsigned char channel)
+   4          {
+   5   1        switch(channel)
+   6   1        {
+   7   2          case 4:
+   8   2            P2 = ( P2 &0X1F ) | 0X80;
+   9   2          break;
+  10   2          case 5:
+  11   2            P2 = ( P2 &0X1F ) | 0Xa0;
+  12   2          break;    
+  13   2          case 6:
+  14   2            P2 = ( P2 &0X1F ) | 0Xc0;
+  15   2          break;    
+  16   2          case 7:
+  17   2            P2 = ( P2 &0X1F ) | 0Xe0;
+  18   2          break;    
+  19   2          case 0:
+  20   2            P2 = ( P2 &0X1F ) | 0X00;
+  21   2          break;    
+  22   2        }
+  23   1        
+  24   1      }
+  25          
+  26          
+  27          void SMG_bit(unsigned char whe,unsigned char dat)
+  28          {
+  29   1        P0=0x01<<whe;
+  30   1        Select573(6);
+  31   1        Select573(0);
+  32   1        P0=dat;
+  33   1        Select573(7);
+  34   1        Select573(0);
+  35   1        
+  36   1      }
+  37          
+  38          void SMG_delay(unsigned int t)
+  39          {
+  40   1        
+  41   1        while(t--);
+  42   1      
+  43   1      }
+  44          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    103    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.0.0   SMG                                                               04/05/2023 19:23:15 PAGE 2   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,174 @@
+C51 COMPILER V9.60.0.0   IOSMG                                                             03/06/2023 15:15:55 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IOSMG
+OBJECT MODULE PLACED IN .\Objects\IOSMG.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE IOSMG.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\IOSMG.lst) TABS(2) OBJECT(.\Objects\IOSMG.obj)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：DS18B20温度传感器实验
+   3          * 实验目的：1.掌握单总线通讯基本特点和工作时序
+   4          *           2.掌握51单片机模拟单总线时序的程序设计方法
+   5          *           3.掌握DS18B20温度传感器的操作方法
+   6          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：用手触摸温度传感器，数码管显示有变化
+   8          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   9          * 注意事项：测量精度为1摄氏度
+  10          * 日期版本：2019-6-24/V2.0
+  11          *******************************************************************************/
+  12          
+  13          //#include "reg52.h"  //定义51单片机特殊功能寄存器
+  14          #include "absacc.h"
+  15          #include "i2c.h"
+  16          #include "STC15F2K60S2.H"
+  17          
+  18          //sfr AUXR = 0x8E;
+  19          
+  20           
+  21          code unsigned char tab[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff};
+  22          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};//显示缓冲区
+  23          
+  24          unsigned char start=1;
+  25          unsigned char key_value=0;
+  26          unsigned char up;
+  27          
+  28          //函数声明
+  29          /**********************************/
+  30          void display(void);
+  31          void cls_buzz();
+  32          void cls_led();
+  33          void delay();
+  34          void read_keyboard(void);
+  35          void key_proc();
+  36          /**********************************/
+  37          
+  38          //主函数
+  39          void main(void)
+  40          { 
+  41   1          unsigned int a;
+  42   1          cls_buzz();
+  43   1          cls_led();   
+  44   1      //    AUXR |= 0xC0;
+  45   1      //    TMOD &= 0xFF;
+  46   1      //    TL0 = 0xCD; //1ms,1Tmoshi
+  47   1      //    TH0 = 0xD4; 
+  48   1      //    TF0 = 0;  
+  49   1      //    TR0 = 1;
+  50   1      //    ET0 = 1; 
+  51   1        
+  52   1          
+  53   1          
+  54   1          
+C51 COMPILER V9.60.0.0   IOSMG                                                             03/06/2023 15:15:55 PAGE 2   
+
+  55   1          EA=0;
+  56   1          for(a=0;a<255;a++)
+  57   1          {
+  58   2              write_eeprom(a,0);
+  59   2              delay();  //延时10ms
+  60   2          }
+  61   1            //向AT24C02地址0x00中写入数据
+  62   1          
+  63   1        
+  64   1      //    start++;
+  65   1      //  
+  66   1      //    start = read_eeprom(0x00);  //从AT24C02地址0x00中读取数据
+  67   1      //    delay();  //延时10ms
+  68   1          
+  69   1          EA=1;
+  70   1        
+  71   1          while(1)
+  72   1          {
+  73   2            //显示数据更新 
+  74   2            
+  75   2      //      read_keyboard();
+  76   2      //      key_proc();
+  77   2      //      dspbuf[0]=stop/100;
+  78   2      //      dspbuf[1]=stop%100/10;      
+  79   2      //      dspbuf[2]=stop%100%10;
+  80   2            dspbuf[2]=1;
+  81   2            dspbuf[3]=1;      
+  82   2            dspbuf[4]=4;
+  83   2            dspbuf[5]=5;
+  84   2            dspbuf[6]=1;      
+  85   2            dspbuf[7]=4; 
+  86   2          }
+  87   1      }
+  88          
+  89          //定时器中断服务函数
+  90          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  91          {
+  92   1      //    static unsigned int a;
+  93   1      //    if(++a==1000)
+  94   1      //    {
+  95   1      //        a=0;
+  96   1      //        start++;
+  97   1      //        write_eeprom(0x00,start);  //向AT24C02地址0x00中写入数据
+  98   1      //        delay();  //延时10ms
+  99   1      //    }
+ 100   1          display();
+ 101   1      }
+ 102          
+ 103          void cls_buzz()
+ 104          {
+ 105   1        P2 = ((P2&0x1f)|0xA0); 
+ 106   1        P0 = 0x00;
+ 107   1        P2 &= 0x1f;
+ 108   1      }
+ 109          void cls_led()
+ 110          {
+ 111   1        P2 = ((P2&0x1f)|0x80); 
+ 112   1        P0 = 0xFF;
+ 113   1        P2 &= 0x1f;
+ 114   1      }
+ 115          
+ 116          void delay()//10ms
+C51 COMPILER V9.60.0.0   IOSMG                                                             03/06/2023 15:15:55 PAGE 3   
+
+ 117          {
+ 118   1          unsigned char i, j;
+ 119   1      
+ 120   1          i = 108;
+ 121   1          j = 145;
+ 122   1          do
+ 123   1          {
+ 124   2            while (--j);
+ 125   2          } while (--i);
+ 126   1      }
+ 127          //显示函数
+ 128          void display(void)
+ 129          {   
+ 130   1        static unsigned char dspcom = 0;
+ 131   1        P2 = ((P2&0x1f)|0xE0);   //段选573
+ 132   1        P0 = 0xff;               //消隐段码
+ 133   1        P2 &= 0x1f; 
+ 134   1      
+ 135   1        P0 = 1<<dspcom;          //循环位选
+ 136   1        P2 = ((P2&0x1f)|0xC0);   //位选573
+ 137   1        P2 &= 0x1f;
+ 138   1        
+ 139   1        P0 = tab[dspbuf[dspcom]];//显示段码
+ 140   1        P2 = ((P2&0x1f)|0xE0);   //段选573
+ 141   1        P2 &= 0x1f;               
+ 142   1        
+ 143   1          if(++dspcom == 8){
+ 144   2              dspcom = 0;
+ 145   2          }    
+ 146   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    234    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

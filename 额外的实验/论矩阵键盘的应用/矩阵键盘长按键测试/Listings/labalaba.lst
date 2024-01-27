@@ -1,0 +1,203 @@
+C51 COMPILER V9.60.0.0   LABALABA                                                          03/08/2023 20:26:43 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LABALABA
+OBJECT MODULE PLACED IN .\Objects\labalaba.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE labalaba.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+                    - PRINT(.\Listings\labalaba.lst) TABS(2) OBJECT(.\Objects\labalaba.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+   2          #include "absacc.h"
+   3          
+   4          unsigned char key_value;
+   5          unsigned char i=0;
+   6          unsigned char ok=0;
+   7          unsigned char Led_Flag;
+   8          
+   9          void read_keyboard(void);
+  10          //void key_proc();
+  11          void led_show();
+  12          
+  13          void cls_buzz(void) //关闭蜂鸣器
+  14          {
+  15   1        P2 = (P2&0x1F|0xA0);
+  16   1        P0 = 0x00;
+  17   1        P2 &= 0x1F;
+  18   1      }
+  19          
+  20          void cls_led(void)//关闭所有LED
+  21          {
+  22   1          P2 = ((P2&0x1f)|0x80);
+  23   1        P0 = 0xff;  
+  24   1        P2 &= 0x1f;
+  25   1      }
+  26          
+  27          void Timer0Init(void)   //12微秒@12.000MHz
+  28          {
+  29   1        AUXR |= 0x80;   //定时器时钟12T模式
+  30   1        TMOD &= 0xF0;   //设置定时器模式
+  31   1        TMOD |= 0x04;
+  32   1        TL0 = 0xff;   //设置定时初值
+  33   1        TH0 = 0xff;   //设置定时初值
+  34   1        TF0 = 0;    //清除TF0标志
+  35   1        TR0 = 1;    //定时器0开始计时
+  36   1        ET0 = 1;    //打开定时器中断
+  37   1      }
+  38          
+  39          void Timer1Init(void)   //12微秒@12.000MHz
+  40          {
+  41   1        AUXR |= 0x40;   //定时器时钟1T模式
+  42   1        TMOD &= 0x0F;   //设置定时器模式
+  43   1        TL1 = 0x20;   //设置定时初值
+  44   1        TH1 = 0xD1;   //设置定时初值
+  45   1        TF1 = 0;    //清除TF0标志
+  46   1        TR1 = 1;    //定时器1开始计时
+  47   1        ET1 = 1;    //打开定时器中断
+  48   1      }
+  49          
+  50          void main()
+  51          {
+  52   1          cls_buzz();
+  53   1          cls_led();
+  54   1          Timer1Init();
+C51 COMPILER V9.60.0.0   LABALABA                                                          03/08/2023 20:26:43 PAGE 2   
+
+  55   1          EA=1;
+  56   1          while(1)
+  57   1          {
+  58   2              read_keyboard();
+  59   2              //key_proc(); 
+  60   2              led_show();
+  61   2          }
+  62   1      }
+  63          
+  64          void isr_timer_1(void)  interrupt 3  //默认中断优先级 3
+  65          {     
+  66   1          static unsigned int a;
+  67   1          if(key_value==12)
+  68   1          {
+  69   2              a++;
+  70   2              if(a>=2000)
+  71   2              {
+  72   3                  ok=~ok;
+  73   3              }
+  74   2          }
+  75   1          else
+  76   1          {
+  77   2              a=0;
+  78   2          }
+  79   1      }
+  80            
+  81          void read_keyboard(void)
+  82          {
+  83   1          static unsigned char hang;
+  84   1        static unsigned char key_state=0; 
+  85   1        switch(key_state)
+  86   1        {
+  87   2          case 0:
+  88   2          {
+  89   3            P3 = 0x0f; P42 = 0; P44 = 0;
+  90   3            if(P3 != 0x0f) //有按键按下
+  91   3            key_state=1;  
+  92   3          }break;
+  93   2          case 1:
+  94   2          {
+  95   3            P3 = 0x0f; P42 = 0; P44 = 0;
+  96   3            if(P3 != 0x0f) //有按键按下
+  97   3            {
+  98   4              if(P30 == 0)hang = 1;
+  99   4              if(P31 == 0)hang = 2;
+ 100   4              if(P32 == 0)hang = 3;
+ 101   4              if(P33 == 0)hang = 4;//确定行     
+ 102   4              switch(hang){
+ 103   5                case 1:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 104   6                  if(P44 == 0) {key_value=0;key_state=2;}
+ 105   6                  else if(P42 == 0) {key_value=1;key_state=2;}
+ 106   6                  else if(P35 == 0) {key_value=2;key_state=2;}
+ 107   6                  else if(P34 == 0) {key_value=3;key_state=2;}
+ 108   6                }break;
+ 109   5                case 2:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 110   6                  if(P44 == 0) {key_value=4;key_state=2;}
+ 111   6                  else if(P42 == 0) {key_value=5;key_state=2;}
+ 112   6                  else if(P35 == 0) {key_value=6;key_state=2;}
+ 113   6                  else if(P34 == 0) {key_value=7;key_state=2;}
+ 114   6                }break;
+ 115   5                case 3:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 116   6                  if(P44 == 0) {key_value=8;key_state=2;}
+C51 COMPILER V9.60.0.0   LABALABA                                                          03/08/2023 20:26:43 PAGE 3   
+
+ 117   6                  else if(P42 == 0) {key_value=9;key_state=2;}
+ 118   6                  else if(P35 == 0) {key_value=10;key_state=2;}
+ 119   6                  else if(P34 == 0) {key_value=11;key_state=2;}
+ 120   6                }break;
+ 121   5                case 4:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 122   6                  if(P44 == 0) {key_value=12;key_state=2;}
+ 123   6                  else if(P42 == 0) {key_value=13;key_state=2;}
+ 124   6                  else if(P35 == 0) {key_value=14;key_state=2;}
+ 125   6                  else if(P34 == 0) {key_value=15;key_state=2;}
+ 126   6                }break;
+ 127   5              } 
+ 128   4            }
+ 129   3            else
+ 130   3            {
+ 131   4              key_state=0;  
+ 132   4            }      
+ 133   3          }break;
+ 134   2          case 2:     
+ 135   2          {
+ 136   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 137   3            if(P3 == 0x0f) //按键放开
+ 138   3            key_state=0;  
+ 139   3          }break;
+ 140   2                  
+ 141   2          } 
+ 142   1        
+ 143   1      }
+ 144          
+ 145          //void key_proc()
+ 146          //{
+ 147          //  
+ 148          //  switch(key_value)
+ 149          //  {
+ 150          //    case 12:
+ 151          //    {
+ 152          //      i=1;
+ 153          //      key_value=0xff;
+ 154          //      break;
+ 155          //    }
+ 156          //  }
+ 157          //}
+ 158          
+ 159          void led_show()
+ 160          {
+ 161   1          //ledall
+ 162   1          if(ok!=0)
+ 163   1          {
+ 164   2            Led_Flag |= 0xff;
+ 165   2          }
+ 166   1          else
+ 167   1          {
+ 168   2            Led_Flag &= 0x00;
+ 169   2          }
+ 170   1          P2 = ((P2&0x1f)|0x80);
+ 171   1          P0 = ~Led_Flag;
+ 172   1          P2 &= 0x1f;
+ 173   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    448    ----
+   CONSTANT SIZE    =   ----    ----
+C51 COMPILER V9.60.0.0   LABALABA                                                          03/08/2023 20:26:43 PAGE 4   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

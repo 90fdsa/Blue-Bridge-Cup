@@ -1,0 +1,59 @@
+C51 COMPILER V9.60.0.0   INIT                                                              05/28/2023 14:48:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE INIT
+OBJECT MODULE PLACED IN .\Objects\init.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE init.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\init.lst) TABS(2) OBJECT(.\Objects\init.obj)
+
+line level    source
+
+   1          #include "init.h"
+   2          
+   3          void close_buzz()
+   4          {
+   5   1        P0=0x00;
+   6   1        P2=(P2&0x1f)|0xa0;
+   7   1        P2&=0x1f;
+   8   1      }
+   9          void close_led()
+  10          {
+  11   1        P0=0xff;
+  12   1        P2=(P2&0x1f)|0x80;
+  13   1        P2&=0x1f;
+  14   1      }
+  15          
+  16          void Timer0Init(void)   //12微秒@12.000MHz
+  17          {
+  18   1        AUXR &= 0x7F;   //定时器时钟12T模式
+  19   1        TMOD &= 0xF0;   //设置定时器模式
+  20   1        TL0 = 0xF4;   //设置定时初值
+  21   1        TH0 = 0xFF;   //设置定时初值
+  22   1        TF0 = 0;    //清除TF0标志
+  23   1        TR0 = 0;    //定时器0开始计时
+  24   1      }
+  25          
+  26          void Timer1Init(void)   //1000微秒@12.000MHz
+  27          {
+  28   1        AUXR &= 0xBF;   //定时器时钟12T模式
+  29   1        TMOD &= 0x0F;   //设置定时器模式
+  30   1        TL1 = 0x18;   //设置定时初值
+  31   1        TH1 = 0xFC;   //设置定时初值
+  32   1        TF1 = 0;    //清除TF1标志
+  33   1        TR1 = 1;    //定时器1开始计时
+  34   1        ET1 = 1;
+  35   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     66    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

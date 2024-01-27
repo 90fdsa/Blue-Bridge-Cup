@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\ascii.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\0x0d000721" 
+PRINT(".\Listings\0x0d000721.m51") RAMSIZE(256) 

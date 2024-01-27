@@ -1,0 +1,153 @@
+C51 COMPILER V9.60.0.0   BADF                                                              03/14/2023 11:13:25 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BADF
+OBJECT MODULE PLACED IN .\Objects\badf.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE badf.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\badf.lst) TABS(2) OBJECT(.\Objects\badf.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"
+   2          
+   3          unsigned char key_value=0;
+   4          unsigned char old_key_value=0;
+   5          unsigned char a=0,b=0,c=0;
+   6          
+   7          void key_scan();
+   8          void delay(unsigned int a);
+   9          void key_proc_short();
+  10          void led_deal();
+  11          
+  12          void close_buzz()
+  13          {
+  14   1          P0=0x00;
+  15   1          P2=(P2&0x1f)|0xa0;
+  16   1          P2&=0x1f;
+  17   1      }
+  18          
+  19          void close_led()
+  20          {
+  21   1          P0=0xff;
+  22   1          P2=(P2&0x1f)|0x80;
+  23   1          P2&=0x1f;
+  24   1      }
+  25          
+  26          void timer0init()
+  27          {
+  28   1          AUXR&=0x7f;
+  29   1          TMOD&=0xf0;
+  30   1          TH0=(65536-1000)/256;
+  31   1          TL0=(65536-1000)%256;
+  32   1          TF0=0;
+  33   1          TR0=1;
+  34   1          ET0=1;
+  35   1      }
+  36          
+  37          void main()
+  38          {
+  39   1          close_buzz();
+  40   1          close_led();
+  41   1          timer0init();
+  42   1          EA=1;
+  43   1          while(1)
+  44   1          {
+  45   2              key_proc_short();
+  46   2              led_deal();
+  47   2          }
+  48   1      }
+  49            
+  50          void time0() interrupt 1
+  51          {
+  52   1          static unsigned int a;
+  53   1          if(++a==10)
+  54   1          {
+C51 COMPILER V9.60.0.0   BADF                                                              03/14/2023 11:13:25 PAGE 2   
+
+  55   2              a=0;
+  56   2              key_scan();
+  57   2          }
+  58   1      }
+  59          
+  60          void key_scan()
+  61          {
+  62   1          static unsigned char hang;
+  63   1          static unsigned char lie;
+  64   1          P3=0x0f;P42=0;P44=0;
+  65   1          if(P3!=0x0f)
+  66   1          {
+  67   2              delay(20);
+  68   2              if(P3!=0x0f)
+  69   2              {
+  70   3                  if(P30==0){hang=1;}
+  71   3                  if(P31==0){hang=5;}
+  72   3                  if(P32==0){hang=9;}
+  73   3                  if(P33==0){hang=13;}
+  74   3                  P3=0xf0;P42=1;P44=1;
+  75   3                  if(P34==0){lie=3;}
+  76   3                  if(P35==0){lie=2;}
+  77   3                  if(P42==0){lie=1;}
+  78   3                  if(P44==0){lie=0;}
+  79   3                  key_value=hang+lie;
+  80   3              }
+  81   2              else
+  82   2              {
+  83   3                  hang=0;lie=0;key_value=0;
+  84   3                  P3=0x0f;P42=0;P44=0;
+  85   3              }
+  86   2          }
+  87   1      }
+  88            
+  89          void delay(unsigned int a)
+  90          {
+  91   1          while(a--);
+  92   1      }
+  93          
+  94          void key_proc_short()
+  95          {
+  96   1          switch(key_value)
+  97   1          {
+  98   2              case 1:
+  99   2              {
+ 100   3                  a=~a;
+ 101   3              }break;
+ 102   2              case 2:
+ 103   2              {
+ 104   3                  b=~b;
+ 105   3              }break;
+ 106   2              case 3:
+ 107   2              {
+ 108   3                  c=~c;
+ 109   3              }break;
+ 110   2          }
+ 111   1      }
+ 112          void led_deal()
+ 113          {
+ 114   1          unsigned char led;
+ 115   1          if(a==0){led&=0xfe;}
+ 116   1          else{led|=0x01;}
+C51 COMPILER V9.60.0.0   BADF                                                              03/14/2023 11:13:25 PAGE 3   
+
+ 117   1          if(b==0){led&=0xfd;}
+ 118   1          else{led|=0x02;}
+ 119   1          if(c==0){led&=0xfb;}
+ 120   1          else{led|=0x04;}
+ 121   1          
+ 122   1          P0=led;
+ 123   1          P2=(P2&0x1f)|0x80;
+ 124   1          P2&=0x1f;
+ 125   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    336    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

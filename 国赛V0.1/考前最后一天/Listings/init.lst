@@ -1,0 +1,74 @@
+C51 COMPILER V9.60.0.0   INIT                                                              06/09/2023 21:38:43 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE INIT
+OBJECT MODULE PLACED IN .\Objects\init.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE init.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\init.lst) TABS(2) OBJECT(.\Objects\init.obj)
+
+line level    source
+
+   1          #include "init.h"
+   2          
+   3          void close_buzz()
+   4          {
+   5   1          P0=0x00;
+   6   1          P2=(P2&0x1f)|0xa0;
+   7   1          P2&=0x1f;
+   8   1      }
+   9          
+  10          void close_led()
+  11          {
+  12   1          P0=0xff;
+  13   1          P2=(P2&0x1f)|0x80;
+  14   1          P2&=0x1f;
+  15   1      }
+  16          
+  17          //void Timer1Init(void)   //1000微秒@12.000MHz
+  18          //{
+  19          //  AUXR &= 0xBF;   //定时器时钟12T模式
+  20          //  TMOD &= 0x0F;   //设置定时器模式
+  21          //  TL1 = 0x18;   //设置定时初值
+  22          //  TH1 = 0xFC;   //设置定时初值
+  23          //  TF1 = 0;    //清除TF1标志
+  24          //  TR1 = 1;    //定时器1开始计时
+  25          //  ET1 = 1;
+  26          //}
+  27          
+  28          //void Timer0Init(void)   //1000微秒@12.000MHz
+  29          //{
+  30          //  AUXR &= 0x7F;   //定时器时钟12T模式
+  31          //  TMOD = 0xf4;    //设置定时器模式
+  32          //  TL0 = 0xff;   //设置定时初值
+  33          //  TH0 = 0xFf;   //设置定时初值
+  34          //  TF0 = 0;    //清除TF1标志
+  35          //  TR0 = 1;    //定时器1开始计时
+  36          //  ET0 = 1;
+  37          //}
+  38          
+  39          void Timer1Init(void)   //100微秒@12.000MHz
+  40          {
+  41   1        AUXR &= 0xBF;   //定时器时钟12T模式
+  42   1        TMOD &= 0x0F;   //设置定时器模式
+  43   1        TL1 = 0x9C;   //设置定时初值
+  44   1        TH1 = 0xFF;   //设置定时初值
+  45   1        TF1 = 0;    //清除TF1标志
+  46   1        TR1 = 1;    //定时器1开始计时
+  47   1        ET1 = 1;
+  48   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     49    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   INIT                                                              06/09/2023 21:38:43 PAGE 2   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

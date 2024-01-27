@@ -1,0 +1,300 @@
+C51 COMPILER V9.60.0.0   BEFORE_TEST                                                       04/07/2023 14:04:32 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BEFORE_TEST
+OBJECT MODULE PLACED IN .\Objects\before_test.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE before_test.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXT
+                    -END PRINT(.\Listings\before_test.lst) TABS(2) OBJECT(.\Objects\before_test.obj)
+
+line level    source
+
+   1          #include "STC15f2K60S2.h"
+   2          #include "iic.h"
+   3          
+   4          code unsigned char weima[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,
+   5                                      0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+   6                                      0xc1,0x8e};
+   7          unsigned char buffer[]={10,10,10,10,10,10,10,10};
+   8          
+   9          unsigned char ad_flag=0;
+  10          unsigned char weixuan;
+  11          unsigned char old_key_value;
+  12          unsigned char key_value;
+  13          unsigned char adc_value;
+  14          float voltage;
+  15          unsigned int fr_count;
+  16          unsigned int frequent=0;
+  17          unsigned char show_mod=0;
+  18          unsigned char dac_mod=0;
+  19          unsigned char led_flag=0;
+  20          unsigned char smg_flag=0;
+  21          
+  22          unsigned char read_keyboard();
+  23          void display();
+  24          void key_proc();
+  25          void fen();
+  26          void show_frequency();
+  27          void show_voltage();
+  28          void show_nothing();
+  29          void dac_out();
+  30          void led_proc();
+  31          void led_choose();
+  32          
+  33          void close_buzz()
+  34          {
+  35   1          P0=0x00;
+  36   1          P2=(P2&0X1F)|0XA0;
+  37   1          P2&=0x1f;
+  38   1      }
+  39          
+  40          void close_led()
+  41          {
+  42   1          P0=0xff;
+  43   1          P2=(P2&0X1F)|0X80;
+  44   1          P2&=0x1f;
+  45   1      }
+  46          
+  47          void Timer0Init(void)   //100微秒@12.000MHz
+  48          {
+  49   1        TMOD = 0xF4;    //设置定时器模式
+  50   1        TL0 = 0xff;   //设置定时初值
+  51   1        TH0 = 0xff;   //设置定时初值
+  52   1        TF0 = 0;    //清除TF0标志
+  53   1        TR0 = 1;
+  54   1        ET0 = 1;    //定时器0开始中断
+C51 COMPILER V9.60.0.0   BEFORE_TEST                                                       04/07/2023 14:04:32 PAGE 2   
+
+  55   1      }
+  56          
+  57          void Timer1Init(void)   //1000微秒@12.000MHz
+  58          {
+  59   1        TMOD &= 0x0F;   //设置定时器模式
+  60   1        TL1 = 0x18;   //设置定时初值
+  61   1        TH1 = 0xfc;   //设置定时初值
+  62   1        TF1 = 0;    //清除TF1标志
+  63   1        TR1 = 1;
+  64   1        ET1 = 1;
+  65   1      }
+  66          
+  67          void main()
+  68          {
+  69   1          close_buzz();
+  70   1          close_led();
+  71   1          Timer0Init();
+  72   1          Timer1Init();
+  73   1          pcf8591_init();
+  74   1          EA=1;
+  75   1          
+  76   1          while(1)
+  77   1          {
+  78   2              fen();
+  79   2          }
+  80   1      }
+  81          
+  82          void Timer0_proc() interrupt 1
+  83          {
+  84   1          fr_count++;
+  85   1      }
+  86          
+  87          void Timer1_proc() interrupt 3
+  88          {
+  89   1          static unsigned char a;
+  90   1          static unsigned char ad;
+  91   1          static unsigned int freq;
+  92   1          display();led_choose();
+  93   1          if(++a==10)
+  94   1          {
+  95   2              a=0;
+  96   2              old_key_value=key_value;
+  97   2              key_value=read_keyboard();
+  98   2              if(old_key_value<key_value){key_proc();}
+  99   2          }
+ 100   1          if(++ad==50)
+ 101   1          {
+ 102   2              ad=0;
+ 103   2              adc_value=pcf8591_adc();
+ 104   2              voltage=adc_value*0.0196;
+ 105   2              dac_out();
+ 106   2          }
+ 107   1          if(++freq==1000)
+ 108   1          {
+ 109   2              frequent=fr_count;
+ 110   2              fr_count=0;
+ 111   2              freq=0;
+ 112   2          }
+ 113   1      }
+ 114          
+ 115          unsigned char read_keyboard()
+ 116          {
+C51 COMPILER V9.60.0.0   BEFORE_TEST                                                       04/07/2023 14:04:32 PAGE 3   
+
+ 117   1          unsigned char key;
+ 118   1          unsigned int hao;
+ 119   1        
+ 120   1          P3|=0x0f;
+ 121   1          P44=0;P42=1;P35=1;P34=1;
+ 122   1          hao=P3&0x0f;
+ 123   1          P44=1;P42=0;P35=1;P34=1;
+ 124   1          hao=(hao<<4)|(P3&0x0f);
+ 125   1          P44=1;P42=1;P35=0;P34=1;
+ 126   1          hao=(hao<<4)|(P3&0x0f);
+ 127   1          P44=1;P42=1;P35=1;P34=0;
+ 128   1          hao=(hao<<4)|(P3&0x0f);
+ 129   1        
+ 130   1          switch(~hao)
+ 131   1          {
+ 132   2            case 0x1000:key=1;break;
+ 133   2            case 0x0100:key=2;break;
+ 134   2            case 0x0010:key=3;break;
+ 135   2            case 0x0001:key=4;break;
+ 136   2            case 0x2000:key=5;break;
+ 137   2            case 0x0200:key=6;break;
+ 138   2            case 0x0020:key=7;break;
+ 139   2            case 0x0002:key=8;break;
+ 140   2            case 0x4000:key=9;break;
+ 141   2            case 0x0400:key=10;break;
+ 142   2            case 0x0040:key=11;break;
+ 143   2            case 0x0004:key=12;break;
+ 144   2            case 0x8000:key=13;break;
+ 145   2            case 0x0800:key=14;break;
+ 146   2            case 0x0080:key=15;break;
+ 147   2            case 0x0008:key=16;break;
+ 148   2            default:key=0;break;
+ 149   2          }
+ 150   1          
+ 151   1          return key;
+ 152   1      }
+ 153          
+ 154          
+ 155          void display()
+ 156          {
+ 157   1          P0=0Xff;
+ 158   1          P2=(P2|0X1F)|0XE0;
+ 159   1          P2&=0X1F;
+ 160   1        
+ 161   1          P0=1<<weixuan;
+ 162   1          P2=(P2|0X1F)|0Xc0;
+ 163   1          P2&=0X1F;
+ 164   1        
+ 165   1          P0=weima[buffer[weixuan]];
+ 166   1          P2=(P2|0X1F)|0XE0;
+ 167   1          P2&=0X1F;
+ 168   1        
+ 169   1          if(++weixuan==8){weixuan=0;}
+ 170   1      }
+ 171          
+ 172          void key_proc()
+ 173          {
+ 174   1          switch(key_value)
+ 175   1          {
+ 176   2            case 13:
+ 177   2            {
+ 178   3                show_mod++;
+C51 COMPILER V9.60.0.0   BEFORE_TEST                                                       04/07/2023 14:04:32 PAGE 4   
+
+ 179   3                if(show_mod==2){show_mod=0;}
+ 180   3            }break;
+ 181   2            case 9:
+ 182   2            {
+ 183   3                dac_mod=~dac_mod;
+ 184   3            }break;
+ 185   2            case 14:
+ 186   2            {
+ 187   3                led_flag=~led_flag;
+ 188   3            }break;
+ 189   2            case 10:
+ 190   2            {
+ 191   3                smg_flag=~smg_flag;
+ 192   3            }break;
+ 193   2            
+ 194   2          }
+ 195   1      }
+ 196          
+ 197          void fen()
+ 198          {
+ 199   1          if(smg_flag==0)
+ 200   1          {
+ 201   2              switch(show_mod)
+ 202   2              {
+ 203   3                case 0:show_voltage();break;
+ 204   3                case 1:show_frequency();break;
+ 205   3              }
+ 206   2          }
+ 207   1          else
+ 208   1          {
+ 209   2              show_nothing();
+ 210   2          }
+ 211   1      }
+ 212          
+ 213          void show_voltage()
+ 214          {
+ 215   1          buffer[0]=22;
+ 216   1          buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+ 217   1          buffer[5]=((int)(voltage*100))/100+11;
+ 218   1          buffer[6]=((int)(voltage*100))%100/10;
+ 219   1          buffer[7]=((int)(voltage*100))%10;
+ 220   1      }
+ 221          
+ 222          void show_frequency()
+ 223          {
+ 224   1          buffer[0]=23;
+ 225   1          buffer[1]=10;buffer[2]=10;
+ 226   1          (frequent>10000)?(buffer[3]=frequent/10000):(buffer[3]=10);
+ 227   1          (frequent>1000)?(buffer[4]=frequent%10000/1000):(buffer[4]=10);
+ 228   1          (frequent>100)?(buffer[5]=frequent%1000/100):(buffer[5]=10);
+ 229   1          buffer[6]=frequent%100/10;
+ 230   1          buffer[7]=frequent%10;
+ 231   1      }
+ 232          
+ 233          void show_nothing()
+ 234          {
+ 235   1          buffer[0]=10;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+ 236   1          buffer[4]=10;buffer[5]=10;buffer[6]=10;buffer[7]=10;  
+ 237   1      }
+ 238          
+ 239          void dac_out()
+ 240          {
+C51 COMPILER V9.60.0.0   BEFORE_TEST                                                       04/07/2023 14:04:32 PAGE 5   
+
+ 241   1          if(dac_mod==0){pcf8591_dac(102);}
+ 242   1          else{pcf8591_dac(adc_value);}
+ 243   1      }
+ 244          
+ 245          void led_choose()
+ 246          {
+ 247   1          if(led_flag==0){led_proc();}
+ 248   1          else{close_led();}
+ 249   1      }
+ 250          
+ 251          void led_proc()
+ 252          {
+ 253   1          unsigned char a;
+ 254   1          if(show_mod==0){a|=0x01;}
+ 255   1          else{a&=0xfe;}
+ 256   1          if(show_mod==1){a|=0x02;}
+ 257   1          else{a&=0xfd;}
+ 258   1          if((voltage>3.5)||(voltage>=1.5&&voltage<2.5)){a|=0x04;}
+ 259   1          else{a&=0xfb;}
+ 260   1          if((frequent>10000)||(frequent>=1000&&frequent<5000)){a|=0x08;}
+ 261   1          else{a&=0xf7;}
+ 262   1          if(dac_mod!=0){a|=0x10;}
+ 263   1          else{a&=0xef;}
+ 264   1          
+ 265   1          P0=~a;
+ 266   1          P2=(P2&0X1F)|0X80;
+ 267   1          P2&=0x1f;
+ 268   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1140    ----
+   CONSTANT SIZE    =     24    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     29       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

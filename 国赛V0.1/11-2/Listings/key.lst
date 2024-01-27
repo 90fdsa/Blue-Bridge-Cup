@@ -1,0 +1,108 @@
+C51 COMPILER V9.54   KEY                                                                   06/01/2023 16:03:51 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: D:\KEIL5_MDK\C51\BIN\C51.EXE key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\key
+                    -.lst) TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          
+   3          extern unsigned char key_value;
+   4          extern unsigned char show_mod,show_sequence;
+   5          extern unsigned char led_can;
+   6          extern char shi_can,tem_can;
+   7          
+   8          unsigned char read_key()
+   9          {
+  10   1          unsigned char key;
+  11   1          unsigned int dai;
+  12   1        
+  13   1          P3|=0x0f;
+  14   1          P44=0;P42=1;P35=1;P34=1;
+  15   1          dai=P3&0x0f;
+  16   1          P44=1;P42=0;P35=1;P34=1;
+  17   1          dai=(dai<<4)|(P3&0x0f);
+  18   1          P44=1;P42=1;P35=0;P34=1;
+  19   1          dai=(dai<<4)|(P3&0x0f);
+  20   1          P44=1;P42=1;P35=1;P34=0;
+  21   1          dai=(dai<<4)|(P3&0x0f);
+  22   1        
+  23   1          switch(~dai)
+  24   1          {
+  25   2            case 0x1000:key=1;break;
+  26   2            case 0x0100:key=2;break;
+  27   2            case 0x0010:key=3;break;
+  28   2            case 0x0001:key=4;break;
+  29   2            case 0x2000:key=5;break;
+  30   2            case 0x0200:key=6;break;
+  31   2            case 0x0020:key=7;break;
+  32   2            case 0x0002:key=8;break;
+  33   2            case 0x4000:key=9;break;
+  34   2            case 0x0400:key=10;break;
+  35   2            case 0x0040:key=11;break;
+  36   2            case 0x0004:key=12;break;
+  37   2            case 0x8000:key=13;break;
+  38   2            case 0x0800:key=14;break;
+  39   2            case 0x0080:key=15;break;
+  40   2            case 0x0008:key=16;break;
+  41   2            default:key=0;break;
+  42   2          }
+  43   1          
+  44   1          return key;
+  45   1      }
+  46          void key_proc()
+  47          {
+  48   1          switch(key_value)
+  49   1          {
+  50   2            case 13://s4
+  51   2            {
+  52   3                show_mod++;
+  53   3                show_sequence=0;
+  54   3                if(show_mod==2){show_mod=0;}
+C51 COMPILER V9.54   KEY                                                                   06/01/2023 16:03:51 PAGE 2   
+
+  55   3            }break;
+  56   2            case 9:show_sequence++;if(show_sequence==3){show_sequence=0;}break;//s5
+  57   2            case 14://s8
+  58   2            {
+  59   3                if(show_mod==1)
+  60   3                {
+  61   4                    switch(show_sequence)
+  62   4                    {
+  63   5                      case 0:shi_can--;if(shi_can<0){shi_can=23;}break;
+  64   5                      case 1:tem_can--;if(tem_can<0){tem_can=99;}break;
+  65   5                      case 2:led_can--;if(led_can<4){led_can=8;}break;
+  66   5                    }
+  67   4                }
+  68   3            }break;
+  69   2            case 10://s9
+  70   2            {
+  71   3                if(show_mod==1)
+  72   3                {
+  73   4                    switch(show_sequence)
+  74   4                    {
+  75   5                      case 0:shi_can++;if(shi_can>23){shi_can=0;}break;
+  76   5                      case 1:tem_can++;if(tem_can>99){tem_can=0;}break;
+  77   5                      case 2:led_can++;if(led_can>8){led_can=4;}break;
+  78   5                    }
+  79   4                }
+  80   3            }break;
+  81   2          }
+  82   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    435    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

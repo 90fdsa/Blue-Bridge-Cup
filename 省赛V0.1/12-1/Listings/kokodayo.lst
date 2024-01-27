@@ -1,0 +1,363 @@
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE KOKODAYO
+OBJECT MODULE PLACED IN .\Objects\kokodayo.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE kokodayo.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+                    - PRINT(.\Listings\kokodayo.lst) TABS(2) OBJECT(.\Objects\kokodayo.obj)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：矩阵键盘实验
+   3          * 实验目的：1.掌握矩阵键盘扫描的基本原理
+   4          *           2.掌握按键扫描及消除抖动的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：按下按键，数码管显示在0~15之间变化
+   7          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.转接板上使用P4.4和P4.2代替P3.6 P3.7
+   9          *       2.采用状态法进行按键扫描，系统实时性好，
+  10          *       且每10ms扫描可以防止抖动。
+  11          * 日期版本：2019-6-24/V2.0
+  12          *******************************************************************************/
+  13          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+  14          #include "absacc.h"
+  15          #include "onewire.h"
+  16          #include "i2c.h"
+  17          
+  18                                     //  0    1    2    3    4    5    6    7    8    9   熄灭
+  19          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xFF,
+  20                                       0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+  21                                       0xc6,0x8C,0x88};
+  22                                     //  C    P    A
+  23          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  24          
+  25          bit key_flag = 0;//按键扫描标志位                                                                         
+             -                 
+  26          unsigned char key_value=0xFF;//按键值
+  27          float true_temperature;
+  28          unsigned char temperature_standard=25;
+  29          unsigned char mod=1;
+  30          unsigned char dac_out=102;
+  31          unsigned char dac_mod=0;
+  32          unsigned char led_mod;
+  33          /******函数声明***********************/
+  34          void read_keyboard(void);
+  35          void display();
+  36          void key_proc();
+  37          void temperature_deal();
+  38          void temperature_show_standard();
+  39          void show_dac();
+  40          void fen();
+  41          void smg_off();
+  42          void dac_pan();
+  43          void led_pan();
+  44          void led_show();
+  45          /************************************/
+  46          
+  47          void cls_buzz(void) //关闭蜂鸣器
+  48          {
+  49   1        P2 = (P2&0x1F|0xA0);
+  50   1        P0 = 0x00;
+  51   1        P2 &= 0x1F;
+  52   1      }
+  53          
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 2   
+
+  54          void cls_led(void)//关闭所有LED
+  55          {
+  56   1          P2 = ((P2&0x1f)|0x80);
+  57   1        P0 = 0xff;  
+  58   1        P2 &= 0x1f;
+  59   1      }
+  60          
+  61          //主函数
+  62          void main(void)
+  63          {  
+  64   1        cls_buzz();
+  65   1        cls_led();
+  66   1        AUXR |= 0x80; //1T模式，IAP15F2K61S2单片机特殊功能寄存器  
+  67   1        TMOD &= 0xF0;
+  68   1        TL0 = 0xCD; 
+  69   1        TH0 = 0xD4; 
+  70   1        TF0 = 0;  
+  71   1        TR0 = 1;
+  72   1        ET0 = 1;
+  73   1        EA = 1;
+  74   1        init_pcf8591();
+  75   1          
+  76   1          while(1)
+  77   1          {
+  78   2             true_temperature=rd_temperature_f();
+  79   2             dac_pcf8591(dac_out);
+  80   2             key_proc();
+  81   2             fen();
+  82   2             led_pan();
+  83   2             led_show();
+  84   2          }
+  85   1      }
+  86          
+  87          //定时器中断服务函数
+  88          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  89          {     
+  90   1        static unsigned char intr = 0;
+  91   1        static unsigned char dac_count=0;
+  92   1        display(); //1ms执行一次
+  93   1      
+  94   1        if(++intr == 10) 
+  95   1        {
+  96   2           intr = 0;
+  97   2           read_keyboard(); 
+  98   2        }
+  99   1        if(++dac_count==150)
+ 100   1        {
+ 101   2            dac_count=0;
+ 102   2            dac_pan();
+ 103   2        }
+ 104   1      }
+ 105          
+ 106          //读取矩阵键盘键值:转接板中使用P42和P44代替8051引脚
+ 107          //顺序中的P36和P37引脚
+ 108          void read_keyboard(void)
+ 109          {
+ 110   1          static unsigned char hang;
+ 111   1        static unsigned char key_state=0; 
+ 112   1        switch(key_state)
+ 113   1        {
+ 114   2          case 0:
+ 115   2          {
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 3   
+
+ 116   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 117   3            if(P3 != 0x0f) //有按键按下
+ 118   3            key_state=1;  
+ 119   3          }break;
+ 120   2          case 1:
+ 121   2          {
+ 122   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 123   3            if(P3 != 0x0f) //有按键按下
+ 124   3            {
+ 125   4              if(P30 == 0)hang = 1;
+ 126   4              if(P31 == 0)hang = 2;
+ 127   4              if(P32 == 0)hang = 3;
+ 128   4              if(P33 == 0)hang = 4;//确定行     
+ 129   4              switch(hang){
+ 130   5                case 1:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 131   6                  if(P44 == 0) {key_value=0;key_state=2;}
+ 132   6                  else if(P42 == 0) {key_value=1;key_state=2;}
+ 133   6                  else if(P35 == 0) {key_value=2;key_state=2;}
+ 134   6                  else if(P34 == 0) {key_value=3;key_state=2;}
+ 135   6                }break;
+ 136   5                case 2:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 137   6                  if(P44 == 0) {key_value=4;key_state=2;}
+ 138   6                  else if(P42 == 0) {key_value=5;key_state=2;}
+ 139   6                  else if(P35 == 0) {key_value=6;key_state=2;}
+ 140   6                  else if(P34 == 0) {key_value=7;key_state=2;}
+ 141   6                }break;
+ 142   5                case 3:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 143   6                  if(P44 == 0) {key_value=8;key_state=2;}
+ 144   6                  else if(P42 == 0) {key_value=9;key_state=2;}
+ 145   6                  else if(P35 == 0) {key_value=10;key_state=2;}
+ 146   6                  else if(P34 == 0) {key_value=11;key_state=2;}
+ 147   6                }break;
+ 148   5                case 4:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 149   6                  if(P44 == 0) {key_value=12;key_state=2;}
+ 150   6                  else if(P42 == 0) {key_value=13;key_state=2;}
+ 151   6                  else if(P35 == 0) {key_value=14;key_state=2;}
+ 152   6                  else if(P34 == 0) {key_value=15;key_state=2;}
+ 153   6                }break;
+ 154   5              } 
+ 155   4            }
+ 156   3            else
+ 157   3            {
+ 158   4              key_state=0;  
+ 159   4            }      
+ 160   3          }break;
+ 161   2          case 2:     
+ 162   2          {
+ 163   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 164   3            if(P3 == 0x0f) //按键放开
+ 165   3            key_state=0;  
+ 166   3          }break;
+ 167   2                  
+ 168   2          } 
+ 169   1      }
+ 170          
+ 171          void key_proc()
+ 172          {
+ 173   1        switch(key_value)
+ 174   1        {
+ 175   2          case 12://S4
+ 176   2          {
+ 177   3            mod++;
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 4   
+
+ 178   3            if(mod==4){mod=1;}
+ 179   3            key_value=0xff;
+ 180   3            break;
+ 181   3          }
+ 182   2          case 8://S5
+ 183   2          {
+ 184   3            dac_mod=~dac_mod;
+ 185   3            key_value=0xff;
+ 186   3            break;
+ 187   3          }
+ 188   2          case 13://S8
+ 189   2          {
+ 190   3            if(mod==2){temperature_standard-=1;}
+ 191   3            key_value=0xff;
+ 192   3            break;
+ 193   3          }
+ 194   2          case 9://S9
+ 195   2          {
+ 196   3            if(mod==2){temperature_standard+=1;}
+ 197   3            key_value=0xff;
+ 198   3            break;
+ 199   3          }
+ 200   2        }
+ 201   1      }
+ 202          
+ 203          
+ 204          //显示函数
+ 205          void display(void)
+ 206          {   
+ 207   1        static unsigned char dspcom = 0;
+ 208   1        P0 = 0xff;
+ 209   1        P2 = ((P2&0x1f)|0xE0); 
+ 210   1        P2 &= 0x1f;
+ 211   1      
+ 212   1        P0 = 1<<dspcom;
+ 213   1        P2 = ((P2&0x1f)|0xC0); 
+ 214   1        P2 &= 0x1f;
+ 215   1      
+ 216   1        P0 = tab[dspbuf[dspcom]]; 
+ 217   1          P2 = ((P2&0x1f)|0xE0); 
+ 218   1        P2 &= 0x1f;
+ 219   1        
+ 220   1          if(++dspcom == 8){
+ 221   2              dspcom = 0;
+ 222   2          }    
+ 223   1      }
+ 224          
+ 225          void smg_off()//关闭数码管，暂时的
+ 226          {
+ 227   1          dspbuf[0]=10;dspbuf[1]=10;dspbuf[2]=10;dspbuf[3]=10;
+ 228   1          dspbuf[4]=10;dspbuf[5]=10;dspbuf[6]=10;dspbuf[7]=10;
+ 229   1      }
+ 230          
+ 231          void temperature_deal()
+ 232          {
+ 233   1          unsigned int temperature100;
+ 234   1          temperature100=true_temperature*100;
+ 235   1          dspbuf[0]=22;dspbuf[1]=10;dspbuf[2]=10;dspbuf[3]=10;
+ 236   1          dspbuf[4]=temperature100/1000;
+ 237   1          dspbuf[5]=(temperature100%1000/100)+11;
+ 238   1          dspbuf[6]=temperature100%100/10;
+ 239   1          dspbuf[7]=temperature100%10;
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 5   
+
+ 240   1          led_mod=1;
+ 241   1      }
+ 242          
+ 243          void temperature_show_standard()
+ 244          {
+ 245   1      //    unsigned int temperature100;
+ 246   1      //    temperature100=temperature_standard*100;
+ 247   1          dspbuf[0]=23;dspbuf[1]=10;dspbuf[2]=10;dspbuf[3]=10;
+ 248   1          dspbuf[4]=10;
+ 249   1          dspbuf[5]=10;
+ 250   1          dspbuf[6]=temperature_standard/10;
+ 251   1          dspbuf[7]=temperature_standard%10;
+ 252   1          led_mod=3;
+ 253   1      }
+ 254          
+ 255          void show_dac()
+ 256          {
+ 257   1          float voltage;
+ 258   1          unsigned int voltage100;
+ 259   1          voltage=dac_out*0.0196;
+ 260   1          voltage100=voltage*100;
+ 261   1          dspbuf[0]=24;dspbuf[1]=10;dspbuf[2]=10;dspbuf[3]=10;
+ 262   1          dspbuf[4]=10;
+ 263   1          dspbuf[5]=(voltage100/100)+11;
+ 264   1          dspbuf[6]=voltage100%100/10;
+ 265   1          dspbuf[7]=voltage100%10;
+ 266   1          led_mod=5;
+ 267   1      }
+ 268          
+ 269          void fen()
+ 270          {
+ 271   1          switch(mod)
+ 272   1          {
+ 273   2            case 1:temperature_deal();break;
+ 274   2            case 2:temperature_show_standard();break;
+ 275   2            case 3:show_dac();break;
+ 276   2          }
+ 277   1      }
+ 278          
+ 279          void dac_pan()
+ 280          {
+ 281   1          if(dac_mod==0)
+ 282   1          {
+ 283   2              if(true_temperature<temperature_standard){dac_out=0;}
+ 284   2              else{dac_out=255;}
+ 285   2          }
+ 286   1          else
+ 287   1          {
+ 288   2              if(true_temperature<=20){dac_out=51;}
+ 289   2              if(true_temperature>20&&true_temperature<40){dac_out=51+((char)(true_temperature-20)*8);}
+ 290   2              if(true_temperature>=40){dac_out=204;}
+ 291   2          }
+ 292   1      }
+ 293          
+ 294          void led_pan()
+ 295          {
+ 296   1          if(led_mod==1)
+ 297   1          {
+ 298   2              if(dac_mod==0){led_mod=1;led_mod++;}
+ 299   2              else{led_mod=1;}
+ 300   2          }
+ 301   1          if(led_mod==3)
+C51 COMPILER V9.60.0.0   KOKODAYO                                                          02/08/2023 10:42:03 PAGE 6   
+
+ 302   1          {
+ 303   2              if(dac_mod==0){led_mod=3;led_mod++;}
+ 304   2              else{led_mod=3;}
+ 305   2          }
+ 306   1          if(led_mod==5)
+ 307   1          {
+ 308   2              if(dac_mod==0){led_mod=5;led_mod++;}
+ 309   2              else{led_mod=5;}
+ 310   2          }
+ 311   1      }
+ 312          
+ 313          void led_show()
+ 314          {
+ 315   1          P2 = ((P2&0x1f)|0x80);
+ 316   1          switch(led_mod)
+ 317   1          {
+ 318   2            //case 0:P0 = 0xff;break;
+ 319   2            case 1:P0 = 0xfd;break;
+ 320   2            case 2:P0 = 0xfc;break;
+ 321   2            case 3:P0 = 0xfb;break;
+ 322   2            case 4:P0 = 0xfa;break;
+ 323   2            case 5:P0 = 0xf7;break;
+ 324   2            case 6:P0 = 0xf6;break;
+ 325   2            //case 7:P0 = 0xf8;break;
+ 326   2          }
+ 327   1          P2 &= 0x1f;
+ 328   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1188    ----
+   CONSTANT SIZE    =     25    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     23       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

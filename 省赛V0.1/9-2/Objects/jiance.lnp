@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\ASD.obj",
+".\Objects\i2c.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\jiance" 
+PRINT(".\Listings\jiance.m51") RAMSIZE(256) 

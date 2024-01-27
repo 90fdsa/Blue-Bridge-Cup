@@ -1,0 +1,139 @@
+C51 COMPILER V9.60.0.0   WOQU                                                              05/31/2023 14:12:04 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WOQU
+OBJECT MODULE PLACED IN .\Objects\woqu.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE woqu.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\woqu.lst) TABS(2) OBJECT(.\Objects\woqu.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.h"
+   2          #include "init.h"
+   3          #include "show.h"
+   4          #include "BTN.h"
+   5          #include "iic.h"
+   6          #include "ultrasonic.h"
+   7          #include "jidianqi.h"
+   8          #include "led.h"
+   9          
+  10          extern unsigned char show_state;
+  11          extern unsigned char key_value;
+  12          extern unsigned char old_key_value;
+  13          extern unsigned char qidong_flag;
+  14          extern float him;
+  15          //实际数据
+  16          //xdata unsigned int freq,frequency;
+  17          //xdata unsigned char adc_value;
+  18          //xdata unsigned char distance;
+  19          unsigned int freq,frequency;
+  20          unsigned char adc_value;
+  21          unsigned char distance;
+  22          float him;
+  23          //参数
+  24          unsigned int fre_standard=9000;
+  25          unsigned char him_standard=40;
+  26          unsigned char dis_standard=60;
+  27          //led辅助
+  28          extern unsigned char led1_shan,led2_shan,led3_shan;
+  29          extern unsigned char aux1,aux2,aux3;
+  30          
+  31          void sonic_qidong();
+  32          
+  33          void main()
+  34          {
+  35   1          close_buzz();
+  36   1          close_led();
+  37   1          pcf8591_init();
+  38   1          Timer0Init_fre();   //1000微秒@12.000MHz
+  39   1          Timer1Init();
+  40   1          PCA_init();
+  41   1          EA=1;
+  42   1          while(1)
+  43   1          {
+  44   2              sonic_qidong();
+  45   2              fen();
+  46   2              tiaojian();
+  47   2          }
+  48   1      }
+  49          
+  50          void sonic_qidong()
+  51          {
+  52   1          if(qidong_flag==1)
+  53   1          {
+  54   2              qidong_flag=0;
+C51 COMPILER V9.60.0.0   WOQU                                                              05/31/2023 14:12:04 PAGE 2   
+
+  55   2              distance=sonic();
+  56   2              if(him<=dis_standard){pcf8591_dac(51);}
+  57   2              if(him>dis_standard&him<80){pcf8591_dac(51+(204/(80-dis_standard))*(him-dis_standard));}
+  58   2              if(him>=80){pcf8591_dac(255);}
+  59   2          }
+  60   1      }
+  61          
+  62          void timer0_proc() interrupt 1
+  63          {
+  64   1          freq++;
+  65   1      }
+  66          
+  67          void timer1_proc() interrupt 3
+  68          {
+  69   1          static unsigned char a;
+  70   1          static unsigned int gong;
+  71   1          static unsigned char ad;
+  72   1          static unsigned int so;
+  73   1          static unsigned char blink;
+  74   1          display();
+  75   1          if(++a==10)
+  76   1          {
+  77   2              a=0;
+  78   2              old_key_value=key_value;
+  79   2              key_value=read_key();
+  80   2              if(old_key_value<key_value){key_proc();}
+  81   2              //继电器
+  82   2              if(distance>dis_standard){open_jidian();}
+  83   2              else{close_buzz();}
+  84   2              //LED
+  85   2              led();
+  86   2          }
+  87   1          if(++so==200)
+  88   1          {
+  89   2              so=0;
+  90   2              qidong_flag=1;
+  91   2          }
+  92   1          if(++gong==500)
+  93   1          {
+  94   2              gong=0;
+  95   2              frequency=freq*2;
+  96   2              freq=0;
+  97   2          }
+  98   1          if(++ad==50)
+  99   1          {
+ 100   2              ad=0;
+ 101   2              adc_value=pcf8591_adc();
+ 102   2              him=adc_value*0.392;
+ 103   2          }
+ 104   1          if(++blink==100)
+ 105   1          {
+ 106   2              blink=0;
+ 107   2              if(led1_shan==1){aux1=~aux1;}else{aux1=0;}
+ 108   2              if(led2_shan==1){aux2=~aux2;}else{aux2=0;}
+ 109   2              if(led3_shan==1){aux3=~aux3;}else{aux3=0;}
+ 110   2          }
+ 111   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    523    ----
+   CONSTANT SIZE    =   ----    ----
+C51 COMPILER V9.60.0.0   WOQU                                                              05/31/2023 14:12:04 PAGE 3   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

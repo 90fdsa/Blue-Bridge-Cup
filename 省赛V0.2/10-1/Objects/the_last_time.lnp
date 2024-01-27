@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\before_test.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\the_last_time" 
+PRINT(".\Listings\the_last_time.m51") RAMSIZE(256) 

@@ -1,0 +1,492 @@
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ASD
+OBJECT MODULE PLACED IN .\Objects\ASD.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ASD.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\ASD.lst) TABS(2) OBJECT(.\Objects\ASD.obj)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：矩阵键盘实验
+   3          * 实验目的：1.掌握矩阵键盘扫描的基本原理
+   4          *           2.掌握按键扫描及消除抖动的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：按下按键，数码管显示在0~15之间变化
+   7          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.转接板上使用P4.4和P4.2代替P3.6 P3.7
+   9          *       2.采用状态法进行按键扫描，系统实时性好，
+  10          *       且每10ms扫描可以防止抖动。
+  11          * 日期版本：2019-6-24/V2.0
+  12          *******************************************************************************/
+  13          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+  14          #include "absacc.h"
+  15          #include "i2c.h"
+  16          #include "onewire.h"
+  17                                     //  0    1    2    3    4    5    6    7    8    9   熄灭
+  18          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xFF,
+  19                                       0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+  20                                       0xc1,0x8e,0xc6,0x89,0x8c};
+  21          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  22          
+  23          
+  24          unsigned char key_value=0xFF;//按键值
+  25          unsigned char select=1;
+  26          unsigned char small_mod=0;
+  27          unsigned char s12_flag=0;
+  28          
+  29          unsigned int pluse=0,pluse_zan=0;//将他们分开存
+  30          
+  31          float temperature;
+  32          unsigned int temperature100;//将他们分开存
+  33          unsigned char shi_wei,ge_wei,yi_wei,er_wei;
+  34          
+  35          unsigned char adc_value;//将他们分开存
+  36          double voltage;
+  37          char ge,dianyi;
+  38          double standard=2;
+  39          
+  40          unsigned char adc_1;
+  41          unsigned char tem_1,tem_2;
+  42          unsigned char fre_1,fre_2,fre_3;
+  43          
+  44          double voltage_stand;
+  45          unsigned int temperature_stand;
+  46          unsigned int frequency_stand;
+  47          
+  48          /******函数声明***********************/
+  49          void read_keyboard();
+  50          void display();
+  51          void show_adc();
+  52          void show_NE();
+  53          void show_tem();
+  54          void fen();
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 2   
+
+  55          void key_proc();
+  56          void deal();
+  57          void deal_adc();
+  58          void deal_tem();
+  59          void delay10ms();
+  60          /************************************/
+  61          
+  62          void cls_buzz(void) //关闭蜂鸣器
+  63          {
+  64   1        P2 = (P2&0x1F|0xA0);
+  65   1        P0 = 0x00;
+  66   1        P2 &= 0x1F;
+  67   1      }
+  68          
+  69          void cls_led(void)//关闭所有LED
+  70          {
+  71   1          P2 = ((P2&0x1f)|0x80);
+  72   1        P0 = 0xff;  
+  73   1        P2 &= 0x1f;
+  74   1      }
+  75          
+  76          void Timer0Init(void)   //12微秒@12.000MHz
+  77          {
+  78   1        AUXR |= 0x80;   //定时器时钟12T模式
+  79   1        TMOD &= 0xF0;   //设置定时器模式
+  80   1        TMOD |= 0x04;
+  81   1        TL0 = 0xff;   //设置定时初值
+  82   1        TH0 = 0xff;   //设置定时初值
+  83   1        TF0 = 0;    //清除TF0标志
+  84   1        TR0 = 1;    //定时器0开始计时
+  85   1        ET0 = 1;    //打开定时器中断
+  86   1      }
+  87          
+  88          void Timer1Init(void)   //12微秒@12.000MHz
+  89          {
+  90   1        AUXR |= 0x40;   //定时器时钟1T模式
+  91   1        TMOD &= 0x0F;   //设置定时器模式
+  92   1        TL1 = 0x20;   //设置定时初值
+  93   1        TH1 = 0xD1;   //设置定时初值
+  94   1        TF1 = 0;    //清除TF0标志
+  95   1        TR1 = 1;    //定时器1开始计时
+  96   1        ET1 = 1;    //打开定时器中断
+  97   1      }
+  98          //主函数
+  99          void main(void)
+ 100          {  
+ 101   1        cls_buzz();
+ 102   1        cls_led();
+ 103   1      
+ 104   1        Timer0Init(); 
+ 105   1        Timer1Init();
+ 106   1        
+ 107   1        EA=0;
+ 108   1        
+ 109   1        adc_1=read_eeprom(0x00);delay10ms();
+ 110   1        tem_1=read_eeprom(0x01);delay10ms();
+ 111   1        tem_2=read_eeprom(0x02);delay10ms();
+ 112   1        fre_1=read_eeprom(0x03);delay10ms();
+ 113   1        fre_2=read_eeprom(0x04);delay10ms();
+ 114   1        fre_3=read_eeprom(0x05);delay10ms();
+ 115   1        
+ 116   1        EA = 1;   
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 3   
+
+ 117   1        init_pcf8591();
+ 118   1        voltage_stand=adc_1*0.0196;
+ 119   1        temperature_stand=tem_1*100+tem_2;
+ 120   1        frequency_stand=fre_1*1000+fre_2*10+fre_3;
+ 121   1        
+ 122   1        while(1)
+ 123   1        {
+ 124   2            read_keyboard();
+ 125   2            key_proc();
+ 126   2            deal();
+ 127   2            fen();
+ 128   2        } 
+ 129   1      }
+ 130          
+ 131          //定时器中断服务函数
+ 132          void isr_timer_0(void)  interrupt 1  //默认中断优先级 3
+ 133          {
+ 134   1          pluse_zan++;
+ 135   1      }
+ 136          
+ 137          void isr_timer_1(void)  interrupt 3  //默认中断优先级 3
+ 138          {     
+ 139   1          static unsigned char time=0;
+ 140   1          static unsigned int tem=0;
+ 141   1          static unsigned int jian=0;
+ 142   1          static unsigned int a=0;
+ 143   1          static unsigned int b=0;
+ 144   1          display(); //1ms执行一次
+ 145   1          if(++time==10)
+ 146   1          {
+ 147   2              time=0;
+ 148   2              adc_value=adc_pcf8591();
+ 149   2          }
+ 150   1          if(++tem==300)
+ 151   1          {
+ 152   2              tem=0;
+ 153   2              temperature=rd_temperature_f();
+ 154   2          }
+ 155   1          if(++jian==1000)
+ 156   1          {
+ 157   2              jian=0;
+ 158   2              TR0=0;
+ 159   2              pluse=pluse_zan;
+ 160   2              pluse_zan=0;
+ 161   2              TR0=1;
+ 162   2          }
+ 163   1          if(s12_flag==1)
+ 164   1          {
+ 165   2              standard=standard+0.1;
+ 166   2              if(standard>=5.1){standard=0;}
+ 167   2              if(++a>=800)
+ 168   2              {
+ 169   3                  if(++b==200)
+ 170   3                  {
+ 171   4                      b=0;
+ 172   4                      standard=standard+0.1;
+ 173   4                      if(standard>=5.1){standard=0;}
+ 174   4                  }
+ 175   3              }
+ 176   2          }
+ 177   1          else
+ 178   1          {
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 4   
+
+ 179   2              a=0;b=0;
+ 180   2          }
+ 181   1          s12_flag=0;
+ 182   1      }
+ 183          
+ 184          //读取矩阵键盘键值:转接板中使用P42和P44代替8051引脚
+ 185          //顺序中的P36和P37引脚
+ 186          void read_keyboard(void)
+ 187          {
+ 188   1          static unsigned char hang;
+ 189   1        static unsigned char key_state=0; 
+ 190   1        switch(key_state)
+ 191   1        {
+ 192   2          case 0:
+ 193   2          {
+ 194   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 195   3            if(P3 != 0x0f) //有按键按下
+ 196   3            key_state=1;  
+ 197   3          }break;
+ 198   2          case 1:
+ 199   2          {
+ 200   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 201   3            if(P3 != 0x0f) //有按键按下
+ 202   3            {
+ 203   4              if(P30 == 0)hang = 1;
+ 204   4              if(P31 == 0)hang = 2;
+ 205   4              if(P32 == 0)hang = 3;
+ 206   4              if(P33 == 0)hang = 4;//确定行     
+ 207   4              switch(hang){
+ 208   5                case 1:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 209   6                  if(P44 == 0) {key_value=0;key_state=2;}
+ 210   6                  else if(P42 == 0) {key_value=1;key_state=2;}
+ 211   6                  else if(P35 == 0) {key_value=2;key_state=2;}
+ 212   6                  else if(P34 == 0) {key_value=3;key_state=2;}
+ 213   6                }break;
+ 214   5                case 2:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 215   6                  if(P44 == 0) {key_value=4;key_state=2;}
+ 216   6                  else if(P42 == 0) {key_value=5;key_state=2;}
+ 217   6                  else if(P35 == 0) {key_value=6;key_state=2;}
+ 218   6                  else if(P34 == 0) {key_value=7;key_state=2;}
+ 219   6                }break;
+ 220   5                case 3:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 221   6                  if(P44 == 0) {key_value=8;key_state=2;}
+ 222   6                  else if(P42 == 0) {key_value=9;key_state=2;}
+ 223   6                  else if(P35 == 0) {key_value=10;key_state=2;}
+ 224   6                  else if(P34 == 0) {key_value=11;key_state=2;}
+ 225   6                }break;
+ 226   5                case 4:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 227   6                  if(P44 == 0) {key_value=12;key_state=2;}
+ 228   6                  else if(P42 == 0) {key_value=13;key_state=2;}
+ 229   6                  else if(P35 == 0) {key_value=14;key_state=2;}
+ 230   6                  else if(P34 == 0) {key_value=15;key_state=2;}
+ 231   6                }break;
+ 232   5              } 
+ 233   4            }
+ 234   3            else
+ 235   3            {
+ 236   4              key_state=0;  
+ 237   4            }      
+ 238   3          }break;
+ 239   2          case 2:     
+ 240   2          {
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 5   
+
+ 241   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 242   3            if(P3 == 0x0f) //按键放开
+ 243   3            key_state=0;  
+ 244   3          }break;
+ 245   2                  
+ 246   2          } 
+ 247   1        
+ 248   1      }
+ 249          
+ 250          void key_proc()
+ 251          {
+ 252   1        switch(key_value)
+ 253   1        {
+ 254   2          case 12://选择
+ 255   2          {
+ 256   3            if(select!=5)
+ 257   3            {
+ 258   4                select++;
+ 259   4                if(select==4){select=1;}
+ 260   4            } 
+ 261   3            else
+ 262   3            {
+ 263   4                s12_flag=1;
+ 264   4            }       
+ 265   3            key_value=0xff;
+ 266   3            break;
+ 267   3          }
+ 268   2          case 8://存储
+ 269   2          {
+ 270   3            write_eeprom(0x00,adc_value);
+ 271   3            delay10ms();
+ 272   3            write_eeprom(0x01,temperature100/100);
+ 273   3            delay10ms();
+ 274   3            write_eeprom(0x02,temperature100%100);
+ 275   3            delay10ms();
+ 276   3            write_eeprom(0x03,pluse/1000);
+ 277   3            delay10ms();
+ 278   3            write_eeprom(0x04,pluse%1000/10);
+ 279   3            delay10ms();
+ 280   3            write_eeprom(0x05,pluse/10);
+ 281   3            delay10ms();
+ 282   3            voltage_stand=voltage;
+ 283   3            temperature_stand=temperature100;
+ 284   3            frequency_stand=pluse;
+ 285   3            key_value=0xff;
+ 286   3            break;
+ 287   3          }
+ 288   2          case 9:
+ 289   2          {
+ 290   3            if(select!=5){select=5;}
+ 291   3            else{select=1;}
+ 292   3            key_value=0xff;
+ 293   3            break;
+ 294   3          }
+ 295   2          case 13://回显
+ 296   2          {
+ 297   3            small_mod=~small_mod;
+ 298   3            key_value=0xff;
+ 299   3            break;
+ 300   3          }
+ 301   2        }
+ 302   1      }
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 6   
+
+ 303          //显示函数
+ 304          void display(void)
+ 305          {   
+ 306   1        static unsigned char dspcom = 0;
+ 307   1        P0 = 0xff;
+ 308   1        P2 = ((P2&0x1f)|0xE0); 
+ 309   1        P2 &= 0x1f;
+ 310   1      
+ 311   1        P0 = 1<<dspcom;
+ 312   1        P2 = ((P2&0x1f)|0xC0); 
+ 313   1        P2 &= 0x1f;
+ 314   1      
+ 315   1        P0 = tab[dspbuf[dspcom]]; 
+ 316   1          P2 = ((P2&0x1f)|0xE0); 
+ 317   1        P2 &= 0x1f;
+ 318   1        
+ 319   1          if(++dspcom == 8){
+ 320   2              dspcom = 0;
+ 321   2          }    
+ 322   1      }
+ 323          
+ 324          void show_adc()
+ 325          {
+ 326   1          if(small_mod==0)
+ 327   1          {
+ 328   2              dspbuf[0]=22;
+ 329   2              dspbuf[1]=10;
+ 330   2              dspbuf[2]=10;
+ 331   2              dspbuf[3]=10;
+ 332   2              dspbuf[4]=10;
+ 333   2              dspbuf[5]=10;
+ 334   2              dspbuf[6]=(ge+11);
+ 335   2              dspbuf[7]=dianyi;
+ 336   2          }
+ 337   1          else
+ 338   1          {
+ 339   2              dspbuf[0]=25;
+ 340   2              dspbuf[1]=22;
+ 341   2              dspbuf[2]=10;
+ 342   2              dspbuf[3]=10;
+ 343   2              dspbuf[4]=10;
+ 344   2              dspbuf[5]=10;
+ 345   2              dspbuf[6]=((char)(voltage_stand*10)/10)+11;
+ 346   2              dspbuf[7]=(char)(voltage_stand*10)%10;
+ 347   2          }
+ 348   1              
+ 349   1      }
+ 350          
+ 351          void show_NE()
+ 352          {
+ 353   1          if(small_mod==0)
+ 354   1          {
+ 355   2              dspbuf[0]=23;
+ 356   2              dspbuf[1]=10;
+ 357   2              dspbuf[2]=10;
+ 358   2              dspbuf[3]=pluse/10000;
+ 359   2              dspbuf[4]=pluse%10000/1000;
+ 360   2              dspbuf[5]=pluse%1000/100;
+ 361   2              dspbuf[6]=pluse%100/10;
+ 362   2              dspbuf[7]=pluse%10;
+ 363   2          }
+ 364   1          else
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 7   
+
+ 365   1          {
+ 366   2              dspbuf[0]=25;
+ 367   2              dspbuf[1]=23;
+ 368   2              dspbuf[2]=10;
+ 369   2              dspbuf[3]=frequency_stand/10000;
+ 370   2              dspbuf[4]=frequency_stand%10000/1000;
+ 371   2              dspbuf[5]=frequency_stand%1000/100;
+ 372   2              dspbuf[6]=frequency_stand%100/10;
+ 373   2              dspbuf[7]=frequency_stand%10;
+ 374   2          }
+ 375   1      } 
+ 376          
+ 377          void show_tem()
+ 378          {
+ 379   1          if(small_mod==0)
+ 380   1          {
+ 381   2              dspbuf[0]=24;
+ 382   2              dspbuf[1]=10;
+ 383   2              dspbuf[2]=10;
+ 384   2              dspbuf[3]=10;
+ 385   2              dspbuf[4]=shi_wei;
+ 386   2              dspbuf[5]=ge_wei+11;
+ 387   2              dspbuf[6]=yi_wei;
+ 388   2              dspbuf[7]=er_wei;
+ 389   2          }
+ 390   1          else
+ 391   1          {
+ 392   2              dspbuf[0]=25;
+ 393   2              dspbuf[1]=24;
+ 394   2              dspbuf[2]=10;
+ 395   2              dspbuf[3]=10;
+ 396   2              dspbuf[4]=temperature_stand/1000;
+ 397   2              dspbuf[5]=(temperature_stand%1000/100)+11;
+ 398   2              dspbuf[6]=temperature_stand/100%10;
+ 399   2              dspbuf[7]=temperature_stand%10;
+ 400   2          }     
+ 401   1      }
+ 402          
+ 403          void show_standard()
+ 404          {
+ 405   1          dspbuf[0]=26;
+ 406   1          dspbuf[1]=key_value/100;
+ 407   1          dspbuf[2]=key_value%100/10;
+ 408   1          dspbuf[3]=key_value%10;
+ 409   1          dspbuf[4]=10;
+ 410   1          dspbuf[5]=10;
+ 411   1          dspbuf[6]=((char)(standard*10))/10+11;
+ 412   1          dspbuf[7]=((char)(standard*10))%10;
+ 413   1      }
+ 414          void fen()
+ 415          {
+ 416   1          if(select==1)
+ 417   1          {show_adc();}
+ 418   1          if(select==2)
+ 419   1          {show_NE();}
+ 420   1          if(select==3)
+ 421   1          {show_tem();}
+ 422   1          if(select==5)
+ 423   1          {show_standard();}
+ 424   1      }
+ 425          
+ 426          void deal()
+C51 COMPILER V9.60.0.0   ASD                                                               03/09/2023 19:43:12 PAGE 8   
+
+ 427          {
+ 428   1          deal_adc();
+ 429   1          deal_tem();
+ 430   1      }
+ 431          
+ 432          void deal_adc()
+ 433          {
+ 434   1          voltage=adc_value*0.0196;
+ 435   1          ge=(char)voltage;
+ 436   1          dianyi=((char)(voltage*10))%10;
+ 437   1      }
+ 438          
+ 439          void deal_tem()
+ 440          {
+ 441   1          temperature100=(int)(temperature*100);
+ 442   1          shi_wei=(char)temperature/10;
+ 443   1          ge_wei=(char)temperature%10;
+ 444   1          yi_wei=(char)(temperature100%100/10);
+ 445   1          er_wei=(char)(temperature100%10);
+ 446   1      }
+ 447          
+ 448          void delay10ms(void)   //误差 0us
+ 449          {
+ 450   1          unsigned char a,b,c;
+ 451   1          for(c=1;c>0;c--)
+ 452   1              for(b=38;b>0;b--)
+ 453   1                  for(a=130;a>0;a--);
+ 454   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1938    ----
+   CONSTANT SIZE    =     27    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     63    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

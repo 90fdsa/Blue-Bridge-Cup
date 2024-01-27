@@ -1,0 +1,46 @@
+C51 COMPILER V9.60.0.0   SHOW                                                              06/09/2023 10:47:38 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SHOW
+OBJECT MODULE PLACED IN .\Objects\show.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE show.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\show.lst) TABS(2) OBJECT(.\Objects\show.obj)
+
+line level    source
+
+   1          #include "show.h"
+   2          
+   3          code unsigned char duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,};
+   4          unsigned char buffer[]={10,10,10,10,10,10,10,10};
+   5          unsigned char weixuan;
+   6          
+   7          void display()
+   8          {
+   9   1          P0=0xff;
+  10   1          P2=(P2&0x1f)|0xe0;
+  11   1          P2&=0x1f;
+  12   1        
+  13   1          P0=1<<weixuan;
+  14   1          P2=(P2&0x1f)|0xc0;
+  15   1          P2&=0x1f;
+  16   1        
+  17   1          P0=duanma[buffer[weixuan]];
+  18   1          P2=(P2&0x1f)|0xe0;
+  19   1          P2&=0x1f;
+  20   1        
+  21   1          if(++weixuan==8){weixuan=0;}
+  22   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     74    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

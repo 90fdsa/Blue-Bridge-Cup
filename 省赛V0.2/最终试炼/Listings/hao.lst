@@ -1,0 +1,222 @@
+C51 COMPILER V9.60.0.0   HAO                                                               06/04/2023 16:36:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HAO
+OBJECT MODULE PLACED IN .\Objects\hao.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE hao.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\hao.lst) TABS(2) OBJECT(.\Objects\hao.obj)
+
+line level    source
+
+   1          #include "stc15f2k60s2.h"
+   2          #include "iic.h"
+   3          #include <stdio.h>
+   4          #include <string.h>
+   5          
+   6          code unsigned char weima[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,
+   7                                      0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff};
+   8          unsigned char buffer[]={10,10,10,10,10,10,10,10};
+   9          unsigned char rxstring[18];
+  10          unsigned char txstring[18];
+  11          
+  12          
+  13          unsigned char key_value;
+  14          unsigned char weixuan;
+  15          unsigned char adc_value;
+  16          float voltage;
+  17          float db;
+  18          unsigned char n=0;//串口接收数据变量
+  19          unsigned char uart_flag;
+  20          
+  21          void display();
+  22          unsigned char read_key();
+  23          void send_byte(unsigned char date);
+  24          void send_string(unsigned char *dat);
+  25          
+  26          
+  27          void close_buzz()
+  28          {
+  29   1          P0=0x00;
+  30   1          P2=(P2&0x1f)|0xa0;
+  31   1          P2&=0x1f;
+  32   1      }
+  33          
+  34          void close_led()
+  35          {
+  36   1          P0=0xff;
+  37   1          P2=(P2&0x1f)|0x80;
+  38   1          P2&=0x1f;
+  39   1      }
+  40          
+  41          void Timer0Init(void)   //1000微秒@12.000MHz
+  42          {
+  43   1        AUXR &= 0x7F;   //定时器时钟12T模式
+  44   1        TMOD &= 0xF0;   //设置定时器模式
+  45   1        TL0 = 0x18;   //设置定时初值
+  46   1        TH0 = 0xFC;   //设置定时初值
+  47   1        TF0 = 0;    //清除TF0标志
+  48   1        TR0 = 1;    //定时器0开始计时
+  49   1        ET0 = 1;
+  50   1      }
+  51          
+  52          void UartInit(void)   //9600bps@12.000MHz
+  53          {
+  54   1        SCON = 0x50;    //8位数据,可变波特率
+C51 COMPILER V9.60.0.0   HAO                                                               06/04/2023 16:36:15 PAGE 2   
+
+  55   1        AUXR &= 0xFB;   //定时器2时钟为Fosc/12,即12T
+  56   1        T2L = 0xE6;   //设定定时初值
+  57   1        T2H = 0xFF;   //设定定时初值
+  58   1        AUXR |= 0x10;   //启动定时器2
+  59   1        ES = 1;
+  60   1      }
+  61          
+  62          
+  63          void main()
+  64          {
+  65   1          close_buzz();
+  66   1          close_led();
+  67   1          Timer0Init();
+  68   1          pcf8591_init();
+  69   1          UartInit();
+  70   1          EA=1;
+  71   1          while(1)
+  72   1          {
+  73   2              buffer[5]=((int)(db*10))/100;
+  74   2              buffer[6]=((int)(db*10))%100/10+11;
+  75   2              buffer[7]=((int)(db*10))%10;
+  76   2              if((uart_flag==1)&&(strcmp(rxstring,"fuckyou\r")==0))
+  77   2              {
+  78   3                  sprintf(txstring,"Noises:%3.1fdb\r\n",db);
+  79   3                  send_string(txstring);
+  80   3                  uart_flag=0;
+  81   3              }
+  82   2          }
+  83   1      }
+  84          
+  85          void timer0_proc() interrupt 1
+  86          {
+  87   1          static unsigned char a;
+  88   1          static unsigned char ad;
+  89   1          display();
+  90   1          if(++a==10)
+  91   1          {
+  92   2              a=0;
+  93   2              key_value=read_key();
+  94   2          }
+  95   1          if(++ad==50)
+  96   1          {
+  97   2              ad=0;
+  98   2              adc_value=pcf8591_adc();
+  99   2              voltage=adc_value*0.0196;
+ 100   2              db=voltage*18;
+ 101   2          }
+ 102   1      }
+ 103            
+ 104          void uart_proc() interrupt 4
+ 105          {
+ 106   1          unsigned char temp;
+ 107   1          if(RI)
+ 108   1          {
+ 109   2              temp=SBUF;
+ 110   2              if(temp=='\n')
+ 111   2              {
+ 112   3                  rxstring[n]='\0';
+ 113   3                  uart_flag=1;
+ 114   3                  n=0;
+ 115   3              }
+ 116   2              else
+C51 COMPILER V9.60.0.0   HAO                                                               06/04/2023 16:36:15 PAGE 3   
+
+ 117   2              {
+ 118   3                  rxstring[n++]=temp;
+ 119   3              }
+ 120   2              RI=0;
+ 121   2          }
+ 122   1      }
+ 123          
+ 124          unsigned char read_key()
+ 125          { 
+ 126   1          unsigned char key;
+ 127   1          unsigned int ji;
+ 128   1          P3|=0x0f;
+ 129   1          P44=0;P42=1;P35=1;P34=1;
+ 130   1          ji=P3&0x0f;
+ 131   1          P44=1;P42=0;P35=1;P34=1;
+ 132   1          ji=(ji<<4)|(P3&0x0f);
+ 133   1          P44=1;P42=1;P35=0;P34=1;
+ 134   1          ji=(ji<<4)|(P3&0x0f);
+ 135   1          P44=1;P42=1;P35=1;P34=0;
+ 136   1          ji=(ji<<4)|(P3&0x0f);
+ 137   1        
+ 138   1          switch(~ji)
+ 139   1          {
+ 140   2            case 0x1000:key=1;break;
+ 141   2            case 0x0100:key=2;break;
+ 142   2            case 0x0010:key=3;break;
+ 143   2            case 0x0001:key=4;break;
+ 144   2            case 0x2000:key=5;break;
+ 145   2            case 0x0200:key=6;break;
+ 146   2            case 0x0020:key=7;break;
+ 147   2            case 0x0002:key=8;break;
+ 148   2            case 0x4000:key=9;break;
+ 149   2            case 0x0400:key=10;break;
+ 150   2            case 0x0040:key=11;break;
+ 151   2            case 0x0004:key=12;break;
+ 152   2            case 0x8000:key=13;break;
+ 153   2            case 0x0800:key=14;break;
+ 154   2            case 0x0080:key=15;break;
+ 155   2            case 0x0008:key=16;break;
+ 156   2            default:key=0;break;
+ 157   2          }
+ 158   1          
+ 159   1          return key;
+ 160   1      }
+ 161          
+ 162          void display()
+ 163          {
+ 164   1          P0=0xff;
+ 165   1          P2=P2=(P2&0x1f)|0xe0;
+ 166   1          P2&=0x1f;
+ 167   1        
+ 168   1          P0=1<<weixuan;
+ 169   1          P2=(P2&0x1f)|0xc0;
+ 170   1          P2&=0x1f;
+ 171   1        
+ 172   1          P0=weima[buffer[weixuan]];
+ 173   1          P2=(P2&0x1f)|0xe0;
+ 174   1          P2&=0x1f;
+ 175   1        
+ 176   1          if(++weixuan==8){weixuan=0;}
+ 177   1      }
+ 178          
+C51 COMPILER V9.60.0.0   HAO                                                               06/04/2023 16:36:15 PAGE 4   
+
+ 179          void send_byte(unsigned char date)
+ 180          {
+ 181   1          SBUF=date;
+ 182   1          while(!TI);
+ 183   1          TI=0;
+ 184   1      }
+ 185          
+ 186          void send_string(unsigned char *dat)
+ 187          {
+ 188   1          while(*dat!='\0')
+ 189   1          {
+ 190   2              send_byte(*dat++);
+ 191   2          }
+ 192   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    834    ----
+   CONSTANT SIZE    =     48    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     59       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

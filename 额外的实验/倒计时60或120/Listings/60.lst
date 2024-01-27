@@ -1,0 +1,233 @@
+C51 COMPILER V9.60.0.0   60                                                                01/07/2023 15:29:10 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE 60
+OBJECT MODULE PLACED IN .\Objects\60.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE 60.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT
+                    -(.\Listings\60.lst) TABS(2) OBJECT(.\Objects\60.obj)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：DS18B20温度传感器实验
+   3          * 实验目的：1.掌握单总线通讯基本特点和工作时序
+   4          *           2.掌握51单片机模拟单总线时序的程序设计方法
+   5          *           3.掌握DS18B20温度传感器的操作方法
+   6          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：用手触摸温度传感器，数码管显示有变化
+   8          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   9          * 注意事项：测量精度为1摄氏度
+  10          * 日期版本：2019-6-24/V2.0
+  11          *******************************************************************************/
+  12          
+  13          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  14          #include "absacc.h"
+  15          
+  16          sfr AUXR = 0x8E;
+  17          
+  18          sbit S7  = P3^0;
+  19          sbit S6  = P3^1;
+  20          sbit S5  = P3^2;
+  21          sbit S4  = P3^3;
+  22           
+  23          code unsigned char tab[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff};
+  24          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};//显示缓冲区
+  25          
+  26          //函数声明
+  27          /**********************************/
+  28          void display(void);
+  29          void cls_buzz();
+  30          void cls_led();
+  31          void button(unsigned char a);
+  32          void delay();
+  33          void key_proc(unsigned char key);
+  34          unsigned char read_key(void);
+  35          /**********************************/
+  36          
+  37          unsigned char second=0;
+  38          unsigned char teim=0;
+  39          
+  40          //主函数
+  41          void main(void)
+  42          { 
+  43   1          unsigned char temp;
+  44   1          cls_buzz();
+  45   1          cls_led();   
+  46   1          AUXR |= 0x80;
+  47   1          TMOD &= 0xF0;
+  48   1          TL0 = 0xCD; //1ms,1Tmoshi
+  49   1          TH0 = 0xD4; 
+  50   1          TF0 = 0;  
+  51   1          TR0 = 1;
+  52   1          ET0 = 1;
+  53   1          EA = 1;
+  54   1          while(1)
+C51 COMPILER V9.60.0.0   60                                                                01/07/2023 15:29:10 PAGE 2   
+
+  55   1          {
+  56   2            //显示数据更新 
+  57   2            button(temp);
+  58   2            dspbuf[2]=teim;
+  59   2            dspbuf[5]=second/100;
+  60   2            dspbuf[6]=second%100/10;      
+  61   2            dspbuf[7]=second%100%10; 
+  62   2          }
+  63   1      }
+  64          
+  65          //定时器中断服务函数
+  66          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  67          {
+  68   1          static unsigned int intr=0;
+  69   1          intr++;
+  70   1          if(intr == 1000)  //1ms执行一次
+  71   1          {
+  72   2              if(second>0)
+  73   2              {
+  74   3                  second--;
+  75   3              }
+  76   2              intr = 0;
+  77   2          }
+  78   1          display();
+  79   1      }
+  80          
+  81          void cls_buzz()
+  82          {
+  83   1        P2 = ((P2&0x1f)|0xA0); 
+  84   1        P0 = 0x00;
+  85   1        P2 &= 0x1f;
+  86   1      }
+  87          void cls_led()
+  88          {
+  89   1        P2 = ((P2&0x1f)|0x80); 
+  90   1        P0 = 0xFF;
+  91   1        P2 &= 0x1f;
+  92   1      }
+  93          
+  94          //延时函数: 10ms@11.0592MHz
+  95          void delay(void)
+  96          {
+  97   1        unsigned char i, j;
+  98   1      
+  99   1        i = 108;
+ 100   1        j = 145;
+ 101   1        do
+ 102   1        {
+ 103   2          while (--j);
+ 104   2        } while (--i);
+ 105   1      }
+ 106          
+ 107          //显示函数
+ 108          void display(void)
+ 109          {   
+ 110   1        static unsigned char dspcom = 0;
+ 111   1        P2 = ((P2&0x1f)|0xE0);   //段选573
+ 112   1        P0 = 0xff;               //消隐段码
+ 113   1        P2 &= 0x1f; 
+ 114   1      
+ 115   1        P0 = 1<<dspcom;          //循环位选
+ 116   1        P2 = ((P2&0x1f)|0xC0);   //位选573
+C51 COMPILER V9.60.0.0   60                                                                01/07/2023 15:29:10 PAGE 3   
+
+ 117   1        P2 &= 0x1f;
+ 118   1        
+ 119   1        P0 = tab[dspbuf[dspcom]];//显示段码
+ 120   1        P2 = ((P2&0x1f)|0xE0);   //段选573
+ 121   1        P2 &= 0x1f;               
+ 122   1        
+ 123   1          if(++dspcom == 8){
+ 124   2              dspcom = 0;
+ 125   2          }    
+ 126   1      }
+ 127          
+ 128          //按键扫描函数
+ 129          unsigned char read_key(void)
+ 130          {
+ 131   1          unsigned char temp;
+ 132   1          unsigned char key_value = 0xff;
+ 133   1          
+ 134   1          temp = P3&0x0f;
+ 135   1          switch(temp)
+ 136   1          {
+ 137   2              case 0x0e:
+ 138   2                  key_value = 1;  //S7
+ 139   2                  break;    
+ 140   2              case 0x0d:
+ 141   2                  key_value = 2;  //S6
+ 142   2                  break;    
+ 143   2              case 0x0b:
+ 144   2                  key_value = 3;  //S5
+ 145   2                  break;    
+ 146   2              case 0x07:
+ 147   2                  key_value = 4;  //S4
+ 148   2                  break;    
+ 149   2          }
+ 150   1          return key_value;
+ 151   1      }
+ 152          
+ 153          void button(unsigned char a)
+ 154          {
+ 155   1          a = read_key();
+ 156   1          if(a != 0xff)
+ 157   1          {
+ 158   2              delay();  //按键消抖
+ 159   2              a = read_key();
+ 160   2              if(a != 0xff)
+ 161   2              {
+ 162   3                  //进入按键处理函数
+ 163   3                  key_proc(a);
+ 164   3                  while(P3 != 0xff);  //等待按键释放                        
+ 165   3              }
+ 166   2          }
+ 167   1      }
+ 168          
+ 169          //按键处理函数
+ 170          void key_proc(unsigned char key)
+ 171          {
+ 172   1          static unsigned char time=0;
+ 173   1          switch(key)
+ 174   1          {
+ 175   2            case 1:
+ 176   2              P2 = (P2&0x1f|0x80);
+ 177   2              switch(time)
+ 178   2              {
+C51 COMPILER V9.60.0.0   60                                                                01/07/2023 15:29:10 PAGE 4   
+
+ 179   3                case 0:second=0;break;
+ 180   3                case 1:second=60;break;
+ 181   3                case 2:second=120;break;
+ 182   3              }
+ 183   2              teim=time;
+ 184   2              time++;
+ 185   2              if(time>2)
+ 186   2              {time=0;}
+ 187   2              P2 &= 0x1f;
+ 188   2              break;
+ 189   2            case 2:
+ 190   2              P2 = (P2&0x1f|0x80);
+ 191   2              P2 &= 0x1f;
+ 192   2              break;
+ 193   2            case 3:
+ 194   2              P2 = (P2&0x1f|0x80);
+ 195   2              P2 &= 0x1f;
+ 196   2              break;
+ 197   2            case 4:
+ 198   2              P2 = (P2&0x1f|0x80);
+ 199   2              P2 &= 0x1f;
+ 200   2              break;
+ 201   2          }    
+ 202   1      }
+ 203          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    415    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     14       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

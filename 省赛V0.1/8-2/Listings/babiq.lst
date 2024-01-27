@@ -1,0 +1,507 @@
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BABIQ
+OBJECT MODULE PLACED IN .\Objects\babiq.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE babiq.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\babiq.lst) TABS(2) OBJECT(.\Objects\babiq.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+   2          #include "absacc.h"
+   3          #include "i2c.h"
+   4          #include "intrins.h"
+   5                                     //  0    1    2    3    4    5    6    7    8    9   熄灭
+   6          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xFF,0x8e};
+   7          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+   8          
+   9          #define somenop {_nop_();_nop_();_nop_();_nop_();_nop_();_nop_();_nop_();_nop_();_nop_(); _nop_();_nop_();
+             -_nop_();_nop_();_nop_();_nop_();}
+  10          sbit TX = P1^0;  //发射引脚
+  11          sbit RX = P1^1;  //接收引脚
+  12          
+  13          bit key_flag = 0;//按键扫描标志位                                                                         
+             -                 
+  14          unsigned char key_value=0xFF;//按键值
+  15          unsigned char s_flag=0;
+  16          unsigned int distance;
+  17          unsigned int time=0;
+  18          unsigned char mod=1;
+  19          unsigned char mod_show=0;
+  20          unsigned int distance_copy=0;
+  21          unsigned char standard=50;
+  22          unsigned char count=0;
+  23          unsigned char count_look=0;
+  24          unsigned char record;
+  25          unsigned char recording[10];
+  26          unsigned char ok,ok_2;
+  27          unsigned char led_1=0,led_2=0,led_3=0;
+  28          unsigned char Led_Flag;
+  29          /******函数声明***********************/
+  30          void read_keyboard(void);
+  31          void display();
+  32          void Timer0Init(void);    //12微秒@12.000MHz
+  33          void Timer1Init(void);    //12微秒@12.000MHz
+  34          unsigned char Sonic();
+  35          void fen();
+  36          void show_data();
+  37          void show_eeprom();
+  38          void can();
+  39          void kong();
+  40          void key_proc();
+  41          void voltage();
+  42          void eeprom_write();
+  43          void delay(); //10ms @11.0592MHz
+  44          void led_show();
+  45          /************************************/
+  46          void cls_buzz(void) //关闭蜂鸣器
+  47          {
+  48   1        P2 = (P2&0x1F|0xA0);
+  49   1        P0 = 0x00;
+  50   1        P2 &= 0x1F;
+  51   1      }
+  52          
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 2   
+
+  53          void cls_led(void)//关闭所有LED
+  54          {
+  55   1          P2 = ((P2&0x1f)|0x80);
+  56   1        P0 = 0xff;  
+  57   1        P2 &= 0x1f;
+  58   1      }
+  59          
+  60          void Timer0Init(void)   //12微秒@12.000MHz
+  61          {
+  62   1        AUXR &= 0x7F;   //定时器时钟12T模式
+  63   1        TMOD &= 0xF0;   //设置定时器模式
+  64   1        TL0 = 0xF4;   //设置定时初值
+  65   1        TH0 = 0xFF;   //设置定时初值
+  66   1        TF0 = 0;    //清除TF0标志
+  67   1        TR0 = 0;    //定时器0停止计时
+  68   1      }
+  69          
+  70          void Timer1Init(void)   //12微秒@12.000MHz
+  71          {
+  72   1        AUXR |= 0x40;   //定时器时钟1T模式
+  73   1        TMOD &= 0x0F;   //设置定时器模式
+  74   1        TL1 = 0x20;   //设置定时初值
+  75   1        TH1 = 0xD1;   //设置定时初值
+  76   1        TF1 = 0;    //清除TF0标志
+  77   1        TR1 = 1;    //定时器1开始计时
+  78   1        ET1 = 1;    //打开定时器中断
+  79   1      }
+  80          
+  81          //主函数
+  82          void main(void)
+  83          { 
+  84   1        char q; 
+  85   1        cls_buzz();
+  86   1        cls_led();
+  87   1        Timer0Init();
+  88   1        Timer1Init();
+  89   1        init_pcf8591();
+  90   1        EA=0;
+  91   1        standard=read_eeprom(0x10);
+  92   1        delay();
+  93   1        count=read_eeprom(0x11);
+  94   1        delay();
+  95   1        for(q=0;q<10;q++)
+  96   1        {
+  97   2            recording[q]=read_eeprom(q);
+  98   2            delay();
+  99   2        }
+ 100   1        EA=1;
+ 101   1        while(1)
+ 102   1        {    
+ 103   2            key_proc();
+ 104   2            fen();
+ 105   2            if(distance-standard>0){voltage();}
+ 106   2            led_show();
+ 107   2        }
+ 108   1      }
+ 109          
+ 110          //定时器中断服务函数
+ 111          void isr_timer_1(void)  interrupt 3  //默认中断优先级 1
+ 112          {     
+ 113   1        static unsigned char intr = 0;
+ 114   1        static unsigned char le=0;
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 3   
+
+ 115   1        static unsigned char ji=0;
+ 116   1        if(++intr == 10) 
+ 117   1        {
+ 118   2           intr = 0;
+ 119   2           read_keyboard(); 
+ 120   2        }
+ 121   1        if(ok_2==1)
+ 122   1        {
+ 123   2            if(++le==200)
+ 124   2            {
+ 125   3                le=0;
+ 126   3                led_1=~led_1;
+ 127   3                ji++;
+ 128   3                if(ji==10)
+ 129   3                {ok_2=0;ji=0;le=0;}
+ 130   3            }
+ 131   2        }
+ 132   1        display(); //1ms执行一次
+ 133   1      }
+ 134          
+ 135          //读取矩阵键盘键值:转接板中使用P42和P44代替8051引脚
+ 136          //顺序中的P36和P37引脚
+ 137          void read_keyboard(void)
+ 138          {
+ 139   1          static unsigned char hang;
+ 140   1        static unsigned char key_state=0; 
+ 141   1        switch(key_state)
+ 142   1        {
+ 143   2          case 0:
+ 144   2          {
+ 145   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 146   3            if(P3 != 0x0f) //有按键按下
+ 147   3            key_state=1;  
+ 148   3          }break;
+ 149   2          case 1:
+ 150   2          {
+ 151   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 152   3            if(P3 != 0x0f) //有按键按下
+ 153   3            {
+ 154   4              if(P30 == 0)hang = 1;
+ 155   4              if(P31 == 0)hang = 2;
+ 156   4              if(P32 == 0)hang = 3;
+ 157   4              if(P33 == 0)hang = 4;//确定行     
+ 158   4              switch(hang){
+ 159   5                case 1:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 160   6                  if(P44 == 0) {key_value=0;key_state=2;}
+ 161   6                  else if(P42 == 0) {key_value=1;key_state=2;}
+ 162   6                  else if(P35 == 0) {key_value=2;key_state=2;}
+ 163   6                  else if(P34 == 0) {key_value=3;key_state=2;}
+ 164   6                }break;
+ 165   5                case 2:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 166   6                  if(P44 == 0) {key_value=4;key_state=2;}
+ 167   6                  else if(P42 == 0) {key_value=5;key_state=2;}
+ 168   6                  else if(P35 == 0) {key_value=6;key_state=2;}
+ 169   6                  else if(P34 == 0) {key_value=7;key_state=2;}
+ 170   6                }break;
+ 171   5                case 3:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 172   6                  if(P44 == 0) {key_value=8;key_state=2;}
+ 173   6                  else if(P42 == 0) {key_value=9;key_state=2;}
+ 174   6                  else if(P35 == 0) {key_value=10;key_state=2;}
+ 175   6                  else if(P34 == 0) {key_value=11;key_state=2;}
+ 176   6                }break;
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 4   
+
+ 177   5                case 4:{P3 = 0xf0; P42 = 1; P44 = 1;
+ 178   6                  if(P44 == 0) {key_value=12;key_state=2;}
+ 179   6                  else if(P42 == 0) {key_value=13;key_state=2;}
+ 180   6                  else if(P35 == 0) {key_value=14;key_state=2;}
+ 181   6                  else if(P34 == 0) {key_value=15;key_state=2;}
+ 182   6                }break;
+ 183   5              } 
+ 184   4            }
+ 185   3            else
+ 186   3            {
+ 187   4              key_state=0;  
+ 188   4            }      
+ 189   3          }break;
+ 190   2          case 2:     
+ 191   2          {
+ 192   3            P3 = 0x0f; P42 = 0; P44 = 0;
+ 193   3            if(P3 == 0x0f) //按键放开
+ 194   3            key_state=0;  
+ 195   3          }break;
+ 196   2                  
+ 197   2          } 
+ 198   1        
+ 199   1      }
+ 200          
+ 201          
+ 202          //显示函数
+ 203          void display(void)
+ 204          {   
+ 205   1        static unsigned char dspcom = 0;
+ 206   1        P0 = 0xff;
+ 207   1        P2 = ((P2&0x1f)|0xE0); 
+ 208   1        P2 &= 0x1f;
+ 209   1      
+ 210   1        P0 = 1<<dspcom;
+ 211   1        P2 = ((P2&0x1f)|0xC0); 
+ 212   1        P2 &= 0x1f;
+ 213   1      
+ 214   1        P0 = tab[dspbuf[dspcom]]; 
+ 215   1          P2 = ((P2&0x1f)|0xE0); 
+ 216   1        P2 &= 0x1f;
+ 217   1        
+ 218   1          if(++dspcom == 8){
+ 219   2              dspcom = 0;
+ 220   2          }    
+ 221   1      }
+ 222          
+ 223          void key_proc()
+ 224          {
+ 225   1        static unsigned char a=0;
+ 226   1        static unsigned char b=0;
+ 227   1        switch(key_value)
+ 228   1        {
+ 229   2          case 12://S4
+ 230   2          {
+ 231   3            distance_copy=distance;
+ 232   3            distance = Sonic();
+ 233   3            if(mod_show!=0)
+ 234   3            {distance_copy=distance+distance_copy;}
+ 235   3            count++;
+ 236   3            EA=0;write_eeprom(0x11,count);delay();EA=1;
+ 237   3            ok=1;ok_2=1;
+ 238   3            eeprom_write();
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 5   
+
+ 239   3            key_value=0xff;
+ 240   3            break;
+ 241   3          }
+ 242   2          case 8://S5,数据回显
+ 243   2          {
+ 244   3            a=~a;led_2=~led_2;
+ 245   3            if(a!=0){mod=2;}
+ 246   3            else{mod=1;}
+ 247   3            
+ 248   3            key_value=0xff;
+ 249   3            break;
+ 250   3          }
+ 251   2          case 9://S9
+ 252   2          {
+ 253   3            b=~b;led_3=~led_3;
+ 254   3            if(b!=0){mod=3;}
+ 255   3            else
+ 256   3            {
+ 257   4              mod=1;
+ 258   4              EA=0;write_eeprom(0x10,standard);delay();EA=1;
+ 259   4              delay();
+ 260   4            }
+ 261   3            key_value=0xff;
+ 262   3            break;
+ 263   3          }
+ 264   2          case 13://S8
+ 265   2          {
+ 266   3            if(mod==1){mod_show=~mod_show;}
+ 267   3            if(mod==2)
+ 268   3            {
+ 269   4                count_look++;
+ 270   4                if(count_look==10)
+ 271   4                {
+ 272   5                    count_look=0;
+ 273   5                }
+ 274   4      //          EA=0;
+ 275   4      //          record=read_eeprom(count_look);
+ 276   4      //          EA=1;
+ 277   4                delay();
+ 278   4            }
+ 279   3            if(mod==3)
+ 280   3            {
+ 281   4                standard+=10;
+ 282   4                if(standard==100){standard=0;}
+ 283   4            }
+ 284   3            key_value=0xff;
+ 285   3            break;
+ 286   3          }
+ 287   2          case 0:
+ 288   2          {
+ 289   3            write_eeprom(0x11,0);
+ 290   3            write_eeprom(0x00,0);
+ 291   3            write_eeprom(0x01,0);
+ 292   3            write_eeprom(0x02,0);
+ 293   3            write_eeprom(0x03,0);
+ 294   3            write_eeprom(0x04,0);
+ 295   3            write_eeprom(0x05,0);
+ 296   3            write_eeprom(0x06,0);
+ 297   3            write_eeprom(0x07,0);
+ 298   3            write_eeprom(0x08,0);
+ 299   3            write_eeprom(0x09,0);
+ 300   3            write_eeprom(0x0a,0);
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 6   
+
+ 301   3            write_eeprom(0x0b,0);
+ 302   3            count=0;
+ 303   3          }
+ 304   2        }
+ 305   1      }
+ 306          
+ 307          unsigned char Sonic(void)
+ 308          {
+ 309   1        unsigned char Dist=0,num=10;
+ 310   1        
+ 311   1      //TX引脚发送10个频率为40Hz方波
+ 312   1        Timer0Init();  //初始化定时器0，初始化定时器初值
+ 313   1        TX = 0;        //发射引脚拉为低电平
+ 314   1        
+ 315   1        while(num--)  //发送10个
+ 316   1        {
+ 317   2          TR0 = 1;
+ 318   2          while(!TF0);  //计时时间到，控制周期
+ 319   2          TF0 = 0;      //手动清除标志位  
+ 320   2          TX ^= 1;      //取反
+ 321   2          Timer0Init();  //初始化定时器0，初始化定时器初值  
+ 322   2        }
+ 323   1      
+ 324   1      
+ 325   1      //接收方波
+ 326   1        TR0 = 0;    //定时器0停止计时
+ 327   1        TF0 = 0;    //清除TF0标志
+ 328   1        TL0 = 0x00; //设置定时初值
+ 329   1        TH0 = 0x00; //设置定时初值
+ 330   1        TR0 = 1;
+ 331   1      
+ 332   1        while(RX && !TF0);  //等待收到脉冲  或定时溢出
+ 333   1        TR0 = 0;  //定时器0停止计时
+ 334   1        
+ 335   1        if(TF0)   //定时溢出
+ 336   1        {
+ 337   2           TF0 = 0; //清除标志位    
+ 338   2           Dist = 255;
+ 339   2        }
+ 340   1        else  //RX接收引脚接收到低电平
+ 341   1        {
+ 342   2          Dist = ((TH0<<8)+TL0)*0.017;
+ 343   2        }
+ 344   1        
+ 345   1        return Dist;
+ 346   1      }
+ 347          
+ 348          void fen()
+ 349          {
+ 350   1          switch(mod)
+ 351   1          {
+ 352   2            case 1:show_data();break;
+ 353   2            case 2:show_eeprom();break;
+ 354   2            case 3:can();break;
+ 355   2          }
+ 356   1      }
+ 357          
+ 358          void show_data()
+ 359          {
+ 360   1          if(mod_show==0){dspbuf[0]=0;}
+ 361   1          else{dspbuf[0]=1;}
+ 362   1          dspbuf[1] = 10;
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 7   
+
+ 363   1          dspbuf[2] = distance_copy/100;
+ 364   1          dspbuf[3] = distance_copy%100/10;
+ 365   1          dspbuf[4] = distance_copy%10;
+ 366   1          dspbuf[5] = distance/100;
+ 367   1          dspbuf[6] = distance%100/10;
+ 368   1          dspbuf[7] = distance%10;  
+ 369   1      }
+ 370          
+ 371          void show_eeprom()
+ 372          {
+ 373   1          dspbuf[0]=(count_look+1)/10;
+ 374   1          dspbuf[1]=(count_look+1)%10;
+ 375   1          dspbuf[2]=count/100;
+ 376   1          dspbuf[3]=count%100/10;
+ 377   1          dspbuf[4]=count%10;
+ 378   1          dspbuf[5]=recording[count_look]/100;
+ 379   1          dspbuf[6]=recording[count_look]%100/10;
+ 380   1          dspbuf[7]=recording[count_look]%10;
+ 381   1      }
+ 382          
+ 383          void can()
+ 384          {
+ 385   1          dspbuf[0]=11;dspbuf[1]=10;dspbuf[2]=10;
+ 386   1          dspbuf[3]=10;dspbuf[4]=10;dspbuf[5]=10;
+ 387   1          dspbuf[6]=standard/10;
+ 388   1          dspbuf[7]=standard%10;
+ 389   1      }
+ 390          
+ 391          void voltage()
+ 392          {
+ 393   1          
+ 394   1          dac_pcf8591(distance-standard);
+ 395   1          if(distance-standard>255)
+ 396   1          {
+ 397   2              dac_pcf8591(255);
+ 398   2          } 
+ 399   1      }
+ 400          
+ 401          void eeprom_write()
+ 402          {
+ 403   1          char i,j;
+ 404   1          //unsigned char linshi; 
+ 405   1          if(ok==1)
+ 406   1          {
+ 407   2              ok=0;
+ 408   2              if(count<10)
+ 409   2              {recording[count]=distance;}
+ 410   2              else
+ 411   2              {
+ 412   3                  for(i=0;i<9;i++)
+ 413   3                  {
+ 414   4                      recording[i]=recording[i+1];
+ 415   4                  }
+ 416   3                  recording[9]=distance;
+ 417   3              }
+ 418   2              for(j=0;j<10;j++)
+ 419   2              {
+ 420   3                  EA=0;write_eeprom(j,recording[j]);delay();EA=1;
+ 421   3              }
+ 422   2          }   
+ 423   1      }
+ 424          
+C51 COMPILER V9.60.0.0   BABIQ                                                             03/05/2023 10:44:46 PAGE 8   
+
+ 425          void delay()    //10ms @12MHz
+ 426          {
+ 427   1          unsigned char a,b,c;
+ 428   1          for(c=1;c>0;c--)
+ 429   1              for(b=38;b>0;b--)
+ 430   1                  for(a=130;a>0;a--);
+ 431   1      }
+ 432          
+ 433          void led_show()
+ 434          {
+ 435   1          //led1
+ 436   1          if(led_1!=0)
+ 437   1          {
+ 438   2            Led_Flag |= 0x01;
+ 439   2          }
+ 440   1          else
+ 441   1          {
+ 442   2            Led_Flag &= 0xfe;
+ 443   2          }
+ 444   1        
+ 445   1          //led7
+ 446   1          if(led_2!=0)
+ 447   1          {
+ 448   2            Led_Flag |= 0x40;
+ 449   2          }
+ 450   1          else
+ 451   1          {
+ 452   2            Led_Flag &= 0xbf;
+ 453   2          }
+ 454   1        
+ 455   1          //led8
+ 456   1          if(led_3!=0)
+ 457   1          {
+ 458   2            Led_Flag |= 0x80;
+ 459   2          }
+ 460   1          else
+ 461   1          {
+ 462   2            Led_Flag &= 0x7f;
+ 463   2          }
+ 464   1          P2 = ((P2&0x1f)|0x80);
+ 465   1          P0 = ~Led_Flag;
+ 466   1          P2 &= 0x1f;
+ 467   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1536    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     46       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

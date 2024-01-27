@@ -1,0 +1,33 @@
+C51 COMPILER V9.60.0.0   JIDIANQI                                                          05/30/2023 20:53:19 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE JIDIANQI
+OBJECT MODULE PLACED IN .\Objects\jidianqi.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE jidianqi.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+                    - PRINT(.\Listings\jidianqi.lst) TABS(2) OBJECT(.\Objects\jidianqi.obj)
+
+line level    source
+
+   1          #include "jidianqi.h"
+   2          
+   3          
+   4          void open_jidian()
+   5          {
+   6   1          P0=0x10;
+   7   1          P2=(P2&0x1f)|0xa0;
+   8   1          P2&=0x1f;
+   9   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     15    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

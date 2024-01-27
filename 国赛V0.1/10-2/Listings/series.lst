@@ -1,0 +1,36 @@
+C51 COMPILER V9.60.0.0   SERIES                                                            06/09/2023 21:05:36 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SERIES
+OBJECT MODULE PLACED IN .\Objects\series.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE series.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\series.lst) TABS(2) OBJECT(.\Objects\series.obj)
+
+line level    source
+
+   1          #include "series.h"
+   2          
+   3          void Uart_Send(unsigned char *Uart_String)//串口发送字符函数
+   4          {
+   5   1        while(*Uart_String != '\0')
+   6   1        {
+   7   2          SBUF = *Uart_String;
+   8   2          while(TI == 0);//等待发送完成
+   9   2          TI = 0;
+  10   2          Uart_String++;
+  11   2        }
+  12   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     22    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

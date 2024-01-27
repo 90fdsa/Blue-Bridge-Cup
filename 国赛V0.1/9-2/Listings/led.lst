@@ -1,0 +1,50 @@
+C51 COMPILER V9.60.0.0   LED                                                               06/05/2023 19:34:44 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          
+   3          extern unsigned char show_mod,show_sequence;
+   4          
+   5          extern float voltage,voltage_standard;
+   6          unsigned char led1,led2,led3,led4,aux4;
+   7          
+   8          void led_pan()
+   9          {
+  10   1          if(show_mod==0&show_sequence==0){led1=1;}else{led1=0;}
+  11   1          if(show_mod==0&show_sequence==1){led2=1;}else{led2=0;}
+  12   1          if(show_mod==0&show_sequence==2){led3=1;}else{led3=0;}
+  13   1          if(voltage>voltage_standard){led4=1;}else{led4=0;}
+  14   1      }
+  15          void led()
+  16          {
+  17   1          unsigned char c;
+  18   1          if(led1==1){c|=0x01;}else{c&=0xfe;}
+  19   1          if(led2==1){c|=0x02;}else{c&=0xfd;}
+  20   1          if(led3==1){c|=0x04;}else{c&=0xfb;}
+  21   1          if(aux4!=0){c|=0x08;}else{c&=0xf7;}
+  22   1          
+  23   1          P0=~c;
+  24   1          P2=(P2&0x1f)|0x80;
+  25   1          P2&=0x1f;
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    207    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\IOSMG.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\IO模式的数码管扫描显示" 
+PRINT(".\Listings\IO模式的数码管扫描显示.m51") RAMSIZE(256) 

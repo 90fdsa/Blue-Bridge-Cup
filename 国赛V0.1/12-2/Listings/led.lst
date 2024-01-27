@@ -1,0 +1,52 @@
+C51 COMPILER V9.60.0.0   LED                                                               05/28/2023 17:17:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          
+   3          extern unsigned char qiehuan,shuju,canshu,jilu;
+   4          extern unsigned char sonic_mod_flag;
+   5          extern unsigned char adc_value;
+   6          
+   7          void led()
+   8          {
+   9   1          unsigned char a;
+  10   1          if(shuju==0){a|=0x01;}
+  11   1          else{a&=0xfe;}
+  12   1          
+  13   1          if(shuju==1){a|=0x02;}
+  14   1          else{a&=0xfd;}
+  15   1          
+  16   1          if(shuju==2){a|=0x04;}
+  17   1          else{a&=0xfb;}
+  18   1          
+  19   1          if(sonic_mod_flag==0){a|=0x08;}
+  20   1          else{a&=0xf7;}
+  21   1          
+  22   1          if(adc_value<=20){a|=0x20;}
+  23   1          else{a&=0xdf;}
+  24   1          
+  25   1          P0=~a;
+  26   1          P2=(P2&0X1F)|0X80;
+  27   1          P2&=0x1f;
+  28   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     90    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

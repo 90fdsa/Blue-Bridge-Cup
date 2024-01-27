@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\badf.obj" 
+TO ".\Objects\qer" 
+PRINT(".\Listings\qer.m51") RAMSIZE(256) 

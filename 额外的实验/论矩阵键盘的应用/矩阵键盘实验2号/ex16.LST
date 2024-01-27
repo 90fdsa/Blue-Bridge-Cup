@@ -1,0 +1,176 @@
+C51 COMPILER V9.60.0.0   EX16                                                              03/11/2023 14:47:58 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EX16
+OBJECT MODULE PLACED IN ex16.OBJ
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ex16.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TAB
+                    -S(2)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：矩阵键盘实验
+   3          * 实验目的：1.掌握矩阵键盘扫描的基本原理
+   4          *           2.掌握按键扫描及消除抖动的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：按下按键，数码管显示在0~15之间变化
+   7          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.转接板上使用P4.4和P4.2代替P3.6 P3.7
+   9          *       2.采用状态法进行按键扫描，系统实时性好，
+  10          *       且每10ms扫描可以防止抖动。
+  11          * 日期版本：2019-6-24/V2.0
+  12          *******************************************************************************/
+  13          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+  14          #include "absacc.h"
+  15          
+  16                                     //  0    1    2    3    4    5    6    7    8    9   熄灭
+  17          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xFF};
+  18          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  19          
+  20          bit key_flag = 0;//按键扫描标志位                                                                         
+             -                 
+  21          unsigned char key_value=0;//按键值
+  22          unsigned char led_1,led_2,led_3,Led_Flag;
+  23          unsigned char flag;
+  24          unsigned int flagnum=0;
+  25          /******函数声明***********************/
+  26          void display();
+  27          void Key_Scan(); 
+  28          void key_proc();
+  29          void led_show();
+  30          /************************************/
+  31          
+  32          void cls_buzz(void) //关闭蜂鸣器
+  33          {
+  34   1        P2 = (P2&0x1F|0xA0);
+  35   1        P0 = 0x00;
+  36   1        P2 &= 0x1F;
+  37   1      }
+  38          
+  39          void cls_led(void)//关闭所有LED
+  40          {
+  41   1          P2 = ((P2&0x1f)|0x80);
+  42   1        P0 = 0xff;  
+  43   1        P2 &= 0x1f;
+  44   1      }
+  45          
+  46          //主函数
+  47          void main(void)
+  48          {  
+  49   1        cls_buzz();
+  50   1        cls_led();
+  51   1        AUXR |= 0x80; //1T模式，IAP15F2K61S2单片机特殊功能寄存器  
+  52   1        TMOD &= 0xF0;
+  53   1        TL0 = 0xCD; 
+C51 COMPILER V9.60.0.0   EX16                                                              03/11/2023 14:47:58 PAGE 2   
+
+  54   1        TH0 = 0xD4; 
+  55   1        TF0 = 0;  
+  56   1        TR0 = 1;
+  57   1        ET0 = 1;
+  58   1        EA = 1;   
+  59   1          while(1)
+  60   1          {
+  61   2              dspbuf[7] = key_value%10;
+  62   2              dspbuf[6] = key_value/10;
+  63   2          }
+  64   1      }
+  65          
+  66          //定时器中断服务函数
+  67          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  68          {     
+  69   1        static unsigned char intr = 0;
+  70   1      
+  71   1        display(); //1ms执行一次
+  72   1        if(++intr == 10) 
+  73   1        {
+  74   2           intr = 0;
+  75   2           Key_Scan();
+  76   2        }
+  77   1        if(++flagnum==2000)
+  78   1        {flagnum=0;flag=1;}
+  79   1      }
+  80          
+  81          void Key_Scan(void)
+  82          {
+  83   1          unsigned char key,hang,lie,keyvalue,yi=0;
+  84   1          P3&=0X0F;P42=0;P44=0;key=P3&0X0F;
+  85   1          if(key!=0x0f)
+  86   1          {
+  87   2             switch(key)
+  88   2             { 
+  89   3                case 0x0e: hang=4;break;
+  90   3                case 0x0d: hang=3;break;
+  91   3                case 0x0b: hang=2;break;
+  92   3                case 0x07: hang=1;break;
+  93   3             }
+  94   2          }
+  95   1          P3|=0XF0;P42=1;P44=1;P36=P42;P37=P44;key=P3&0xf0;
+  96   1          if(key!=0xf0)
+  97   1          {
+  98   2             switch(key)
+  99   2             {
+ 100   3                case 0xe0: lie=4;break;
+ 101   3                case 0xd0: lie=3;break;
+ 102   3                case 0xb0: lie=2;break;
+ 103   3                case 0x70: lie=1;break;
+ 104   3             }
+ 105   2          }
+ 106   1          keyvalue=lie*4+hang-1;key_value=keyvalue;
+ 107   1          P3=0X0F;P42=0;P44=0;key=P3&0X0F; //松手检测
+ 108   1          flagnum=0;flag=0;yi=0;
+ 109   1          while(P3!=0X0F)
+ 110   1          {
+ 111   2             if(flag==1&&yi==0)
+ 112   2             { 
+ 113   3                 switch(keyvalue)
+ 114   3                 {case  1:   break;   }   
+ 115   3             }  //长按
+C51 COMPILER V9.60.0.0   EX16                                                              03/11/2023 14:47:58 PAGE 3   
+
+ 116   2          }
+ 117   1          if(flag==0)
+ 118   1          { 
+ 119   2              switch(keyvalue)
+ 120   2              {case  1:   break;   }  
+ 121   2          }   //短按
+ 122   1      
+ 123   1      }
+ 124          
+ 125          
+ 126          
+ 127          
+ 128          //显示函数
+ 129          void display(void)
+ 130          {   
+ 131   1        static unsigned char dspcom = 0;
+ 132   1        P0 = 0xff;
+ 133   1        P2 = ((P2&0x1f)|0xE0); 
+ 134   1        P2 &= 0x1f;
+ 135   1      
+ 136   1        P0 = 1<<dspcom;
+ 137   1        P2 = ((P2&0x1f)|0xC0); 
+ 138   1        P2 &= 0x1f;
+ 139   1      
+ 140   1        P0 = tab[dspbuf[dspcom]]; 
+ 141   1          P2 = ((P2&0x1f)|0xE0); 
+ 142   1        P2 &= 0x1f;
+ 143   1        
+ 144   1          if(++dspcom == 8){
+ 145   2              dspcom = 0;
+ 146   2          }    
+ 147   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    417    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     18       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

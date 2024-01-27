@@ -1,0 +1,77 @@
+C51 COMPILER V9.60.0.0   LED                                                               05/31/2023 14:25:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\led.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          
+   3          extern unsigned int frequency;
+   4          extern float him;
+   5          extern unsigned char distance;
+   6          
+   7          //extern unsigned int xdata frequency;
+   8          //extern unsigned char xdata adc_value;
+   9          //extern unsigned char xdata distance;
+  10          
+  11          extern unsigned int fre_standard;
+  12          extern unsigned char him_standard;
+  13          extern unsigned char dis_standard;
+  14          
+  15          extern unsigned char show_state;
+  16          extern unsigned char show_canshu;
+  17          
+  18          unsigned char led1_chang,led2_chang,led3_chang,led4_chang,led5_chang,led6_chang;
+  19          unsigned char led1_shan,led2_shan;led3_shan;
+  20          unsigned char aux1,aux2,aux3;
+  21          
+  22          
+  23          void tiaojian()
+  24          {
+  25   1          if(show_state==0){led1_chang=1;}else{led1_chang=0;}
+  26   1          if(show_state==3&&show_canshu==0){led1_shan=1;}else{led1_shan=0;}
+  27   1          
+  28   1          if(show_state==1){led2_chang=1;}else{led2_chang=0;}
+  29   1          if(show_state==3&&show_canshu==1){led2_shan=1;}else{led2_shan=0;}
+  30   1          
+  31   1          if(show_state==2){led3_chang=1;}else{led3_chang=0;}
+  32   1          if(show_state==3&&show_canshu==2){led3_shan=1;}else{led3_shan=0;}
+  33   1          
+  34   1          if(frequency>fre_standard){led4_chang=1;}else{led4_chang=0;}
+  35   1          if(him>him_standard){led5_chang=1;}else{led5_chang=0;}
+  36   1          if(distance>dis_standard){led6_chang=1;}else{led6_chang=0;}
+  37   1      }
+  38          void led()
+  39          {
+  40   1          unsigned char c;
+  41   1          if(led1_chang==1|aux1!=0){c|=0x01;}else{c&=0xfe;}
+  42   1          if(led2_chang==1|aux2!=0){c|=0x02;}else{c&=0xfd;}
+  43   1          if(led3_chang==1|aux3!=0){c|=0x04;}else{c&=0xfb;}
+  44   1          if(led4_chang==1){c|=0x08;}else{c&=0xf7;}
+  45   1          if(led5_chang==1){c|=0x10;}else{c&=0xef;}
+  46   1          if(led6_chang==1){c|=0x20;}else{c&=0xdf;}
+  47   1          
+  48   1          P0=~c;
+  49   1          P2=(P2&0x1f)|0x80;
+  50   1          P2&=0x1f;
+  51   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.60.0.0   LED                                                               05/31/2023 14:25:57 PAGE 2   
+
+   CODE SIZE        =    334    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,93 @@
+C51 COMPILER V9.60.0.0   KEY                                                               06/09/2023 19:01:26 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\key.lst) TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          
+   3          unsigned char key_value,old_key_value;
+   4          
+   5          unsigned char read_key_juzhen()
+   6          {
+   7   1          unsigned char key;
+   8   1          unsigned int dai;
+   9   1        
+  10   1          P3|=0x0f;
+  11   1          P44=0;P42=1;P35=1;P34=1;
+  12   1          dai=P3&0x0f;
+  13   1          P44=1;P42=0;P35=1;P34=1;
+  14   1          dai=(dai<<4)|(P3&0x0f);
+  15   1          P44=1;P42=1;P35=0;P34=1;
+  16   1          dai=(dai<<4)|(P3&0x0f);
+  17   1          P44=1;P42=1;P35=1;P34=0;
+  18   1          dai=(dai<<4)|(P3&0x0f);
+  19   1         
+  20   1          switch(~dai)
+  21   1          {
+  22   2            case 0x1000:key=1;break;
+  23   2            case 0x0100:key=2;break;
+  24   2            case 0x0010:key=3;break;
+  25   2            case 0x0001:key=4;break;
+  26   2            case 0x2000:key=5;break;
+  27   2            case 0x0200:key=6;break;
+  28   2            case 0x0020:key=7;break;
+  29   2            case 0x0002:key=8;break;
+  30   2            case 0x4000:key=9;break;
+  31   2            case 0x0400:key=10;break;
+  32   2            case 0x0040:key=11;break;
+  33   2            case 0x0004:key=12;break;
+  34   2            case 0x8000:key=13;break;
+  35   2            case 0x0800:key=14;break;
+  36   2            case 0x0080:key=15;break;
+  37   2            case 0x0008:key=16;break;
+  38   2            default:key=0;break;
+  39   2          }
+  40   1          
+  41   1          return key;
+  42   1      }
+  43          void key_proc()
+  44          {
+  45   1          switch(key_value)
+  46   1          {
+  47   2            case 9:break;
+  48   2            case 10:break;
+  49   2            case 13:break;
+  50   2            case 14:break;
+  51   2          } 
+  52   1      }
+  53          
+  54          //sbit S7=P3^0;
+C51 COMPILER V9.60.0.0   KEY                                                               06/09/2023 19:01:26 PAGE 2   
+
+  55          //sbit S6=P3^1;
+  56          //sbit S5=P3^2;
+  57          //sbit S4=P3^3;
+  58          //unsigned char read_key_duli()
+  59          //{
+  60          //    unsigned char key;
+  61          //    if(!S7){key=4;}
+  62          //    else if(!S6){key=3;}
+  63          //    else if(!S5){key=2;}
+  64          //    else if(!S4){key=1;}
+  65          //    else{key=0;}
+  66          //    return key;
+  67          //}
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    267    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

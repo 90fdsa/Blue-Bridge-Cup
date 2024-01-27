@@ -1,0 +1,241 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              04/07/2023 21:29:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE User\main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEN
+                    -D PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "stdio.h"
+   3          #include "Timer.h"
+   4          #include "seg.h"
+   5          #include "bsp_key.h"
+   6          #include "pcf8591.h"
+   7          #include "bsp_led.h"
+   8          #include "uart.h"
+   9          #include <string.h>
+  10          
+  11          unsigned int seg_slow_down;
+  12          unsigned int key_slow_down;
+  13          unsigned int led_slow_down;
+  14          
+  15          unsigned char ucled;
+  16          
+  17          unsigned char Key_Value;
+  18          unsigned char Key_Old,Key_Down,Key_Up;
+  19          
+  20          unsigned char pos;
+  21          unsigned char seg_buf[8];
+  22          unsigned char seg_string[10];
+  23          
+  24          
+  25          void Seg_Proc();
+  26          void Key_Proc();
+  27          void Led_Proc();
+  28          
+  29          
+  30          //======参数区
+  31          xdata float noise;//噪声
+  32          unsigned char noise_c=65;//噪声设定参数
+  33          unsigned char t_L3=0;
+  34          xdata unsigned char uart_T_string[18];//串口发送
+  35          xdata unsigned char uart_R_string[18];//串口接受
+  36          unsigned char temp;//串口中间变量
+  37          unsigned char n=0;//串口接受数据数量
+  38          
+  39          
+  40          //==标志位
+  41          bit stat_flag=0;//界面标志位
+  42          bit stat_more_flag=0;//分贝过大标志位
+  43          bit uart_flag=0;//串口接受标志位
+  44          
+  45          
+  46          void main()
+  47          {
+  48   1        Timer0Init();
+  49   1        Initsystem();
+  50   1        UartInit();
+  51   1      
+  52   1        while(1)
+  53   1        {
+  54   2          
+C51 COMPILER V9.60.0.0   MAIN                                                              04/07/2023 21:29:01 PAGE 2   
+
+  55   2          Seg_Proc();
+  56   2          Key_Proc();
+  57   2          Led_Proc();   
+  58   2        }
+  59   1      
+  60   1      }
+  61          void ServiceUart() interrupt 4
+  62          {
+  63   1        
+  64   1        if(RI==1)
+  65   1        {
+  66   2          temp=SBUF;
+  67   2          if(temp == 'n')
+  68   2          {
+  69   3            uart_R_string[n++]=temp;
+  70   3            uart_R_string[n]='\0';
+  71   3            uart_flag=1;
+  72   3            n=0;
+  73   3          }
+  74   2          else
+  75   2          {
+  76   3          uart_R_string[n++]=temp;
+  77   3      
+  78   3          }
+  79   2          
+  80   2          
+  81   2          RI=0;
+  82   2        }
+  83   1      
+  84   1        
+  85   1      }
+  86          
+  87          void SeviceT0() interrupt 1
+  88          {
+  89   1        
+  90   1        if(++seg_slow_down==300) seg_slow_down=0;
+  91   1        if(++key_slow_down==10) key_slow_down=0;
+  92   1        if(++led_slow_down==300) led_slow_down=0;
+  93   1        Seg_Disp(seg_buf,pos);
+  94   1        if(++pos==8) pos=0;
+  95   1      
+  96   1        if(stat_more_flag==1)
+  97   1        {
+  98   2          t_L3++;
+  99   2        }
+ 100   1        if(t_L3==100)
+ 101   1        {
+ 102   2          t_L3=0;
+ 103   2          ucled^=0x04;
+ 104   2        }
+ 105   1        Key_Disp(ucled);
+ 106   1        
+ 107   1      }
+ 108          
+ 109          
+ 110          
+ 111          void Seg_Proc()
+ 112          {
+ 113   1        if(seg_slow_down) return;
+ 114   1        noise=(ADC()*18.0/51.0);
+ 115   1        
+ 116   1        if(stat_flag==0)
+C51 COMPILER V9.60.0.0   MAIN                                                              04/07/2023 21:29:01 PAGE 3   
+
+ 117   1        {
+ 118   2        if((uart_flag==1)&&(strcmp(uart_R_string,"Return")==0))
+ 119   2        {
+ 120   3          
+ 121   3          sprintf(uart_T_string,"Noises:%3.1fdb\r\n",noise);
+ 122   3          sendString(uart_T_string);
+ 123   3          uart_flag=0;
+ 124   3        }
+ 125   2        
+ 126   2        sprintf(seg_string,"U1 %6.1f",noise);
+ 127   2        }
+ 128   1        
+ 129   1        
+ 130   1        else
+ 131   1        sprintf(seg_string,"U2%6d",(int)noise_c);
+ 132   1        
+ 133   1        
+ 134   1        
+ 135   1        
+ 136   1        Seg_Tran(seg_string,seg_buf);
+ 137   1        
+ 138   1      }
+ 139          
+ 140          void Key_Proc()
+ 141          {
+ 142   1        if(key_slow_down) return; 
+ 143   1        
+ 144   1        Key_Value=Key_Read();
+ 145   1        Key_Down=Key_Value&(Key_Old^Key_Value);
+ 146   1        Key_Up=~Key_Value&(Key_Old^Key_Value);
+ 147   1        Key_Old=Key_Value;
+ 148   1        
+ 149   1        
+ 150   1        switch(Key_Down)
+ 151   1        {
+ 152   2          case 12:
+ 153   2          stat_flag^=1;
+ 154   2          
+ 155   2          break;
+ 156   2          case 16:
+ 157   2          if((noise_c<90)&&(stat_flag==1))
+ 158   2          {
+ 159   3            noise_c+=5;
+ 160   3      
+ 161   3          }     
+ 162   2          
+ 163   2          break;    
+ 164   2          
+ 165   2          case 17:
+ 166   2          if((noise_c>0)&&(stat_flag==1))
+ 167   2          {
+ 168   3            noise_c-=5;
+ 169   3      
+ 170   3          }       
+ 171   2          
+ 172   2          break;  
+ 173   2          
+ 174   2          
+ 175   2          
+ 176   2        }
+ 177   1        
+ 178   1      }
+C51 COMPILER V9.60.0.0   MAIN                                                              04/07/2023 21:29:01 PAGE 4   
+
+ 179          
+ 180          
+ 181          void Led_Proc()
+ 182          {
+ 183   1        if(led_slow_down) return; 
+ 184   1        
+ 185   1        if(stat_flag==0)
+ 186   1        {
+ 187   2          ucled|=0x01;
+ 188   2          ucled&=0xfd;
+ 189   2      
+ 190   2        }
+ 191   1        else
+ 192   1        {
+ 193   2      
+ 194   2          ucled|=0x02;
+ 195   2          ucled&=0xfe;
+ 196   2        }
+ 197   1        
+ 198   1        if(noise>noise_c)
+ 199   1        {
+ 200   2          stat_more_flag=1;
+ 201   2          
+ 202   2        }
+ 203   1        else
+ 204   1        {
+ 205   2          stat_more_flag=0;
+ 206   2          t_L3=0;
+ 207   2          ucled&=0xfb;
+ 208   2        }
+ 209   1        
+ 210   1        
+ 211   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    616    ----
+   CONSTANT SIZE    =     39    ----
+   XDATA SIZE       =     40    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     34    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

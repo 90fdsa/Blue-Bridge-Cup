@@ -1,0 +1,59 @@
+C51 COMPILER V9.60.0.0   ULTRASONIC                                                        06/09/2023 20:39:59 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ULTRASONIC
+OBJECT MODULE PLACED IN .\Objects\ultrasonic.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ultrasonic.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTE
+                    -ND PRINT(.\Listings\ultrasonic.lst) TABS(2) OBJECT(.\Objects\ultrasonic.obj)
+
+line level    source
+
+   1          #include "ultrasonic.h"
+   2          
+   3          sbit tx=P1^0;
+   4          sbit rx=P1^1;
+   5          
+   6          void Delay13us()    //@12.000MHz
+   7          {
+   8   1        unsigned char i;
+   9   1      
+  10   1        _nop_();
+  11   1        _nop_();
+  12   1        i = 36;
+  13   1        while (--i);
+  14   1      }
+  15          
+  16          void send_wave()
+  17          {
+  18   1          unsigned char i;
+  19   1          for(i=0;i<10;i++)
+  20   1          {
+  21   2              tx=1;Delay13us();
+  22   2              tx=0;Delay13us();
+  23   2          }
+  24   1      }
+  25          unsigned char sonic()
+  26          {
+  27   1          unsigned char dis;
+  28   1          send_wave();
+  29   1          CF=0;CH=0;CL=0;CR=1;
+  30   1          while((rx)&(!CF));
+  31   1          CR=0;
+  32   1          if(CF){CF=0;dis=255;}
+  33   1          else{dis=((CH<<8)+CL)*0.017;}
+  34   1          return dis;
+  35   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     98    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

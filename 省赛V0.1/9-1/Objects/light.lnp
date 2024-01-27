@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\mian.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\light" 
+PRINT(".\Listings\light.m51") RAMSIZE(256) 

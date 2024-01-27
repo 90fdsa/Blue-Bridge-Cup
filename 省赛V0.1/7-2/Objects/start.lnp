@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\kaoyan.obj",
+".\Objects\ds1302.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\start" 
+PRINT(".\Listings\start.m51") RAMSIZE(256) 

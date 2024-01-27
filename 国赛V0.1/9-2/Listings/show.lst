@@ -1,0 +1,146 @@
+C51 COMPILER V9.60.0.0   SHOW                                                              06/05/2023 19:34:44 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SHOW
+OBJECT MODULE PLACED IN .\Objects\show.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE show.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\show.lst) TABS(2) OBJECT(.\Objects\show.obj)
+
+line level    source
+
+   1          #include "show.h"
+   2          
+   3          code unsigned char duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,
+   4                                       0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+   5                                       0xc1,0x8e,0xc6,0x89,0x8c};
+   6          //                             U    F    C    H    P 
+   7          unsigned char buffer[8]={10,10,10,10,10,10,10,10,};
+   8          unsigned char weixuan;
+   9          unsigned char show_mod,show_sequence;
+  10          //主函数传过来的测量值
+  11          extern float voltage,temperature;
+  12          extern unsigned int freq,frequency;
+  13          //主函数传过来的记录值
+  14          extern unsigned char voltage_record;
+  15          extern unsigned int temperature_record,frequency_record;
+  16          //主函数传过来的标准值
+  17          extern float voltage_standard;
+  18          
+  19          void display()
+  20          {
+  21   1          P0=0xff;
+  22   1          P2=(P2&0x1f)|0xe0;
+  23   1          P2&=0x1f;
+  24   1        
+  25   1          P0=1<<weixuan;
+  26   1          P2=(P2&0x1f)|0xc0;
+  27   1          P2&=0x1f;
+  28   1        
+  29   1          P0=duanma[buffer[weixuan]];
+  30   1          P2=(P2&0x1f)|0xe0;
+  31   1          P2&=0x1f;
+  32   1        
+  33   1          if(++weixuan==8){weixuan=0;}
+  34   1      }
+  35          
+  36          void fen()
+  37          {
+  38   1          switch(show_mod)
+  39   1          {
+  40   2            case 0:
+  41   2            {
+  42   3               switch(show_sequence)
+  43   3               {
+  44   4                 case 0:voltage_show();break;
+  45   4                 case 1:frequency_show();break;
+  46   4                 case 2:temperature_show();break;
+  47   4               }
+  48   3            }break;
+  49   2            case 1:
+  50   2            {
+  51   3               switch(show_sequence)
+  52   3               {
+  53   4                 case 0:voltage_history_show();break;
+  54   4                 case 1:frequency_history_show();break;
+C51 COMPILER V9.60.0.0   SHOW                                                              06/05/2023 19:34:44 PAGE 2   
+
+  55   4                 case 2:temperature_history_show();break;
+  56   4               }
+  57   3            }break;
+  58   2            case 2:
+  59   2            {
+  60   3                voltage_yu();
+  61   3            }break;
+  62   2          }
+  63   1      }
+  64          void voltage_show()
+  65          {
+  66   1          buffer[0]=22;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  67   1          buffer[4]=10;buffer[5]=10;
+  68   1          buffer[6]=((int)(voltage*10))/10+11;
+  69   1          buffer[7]=((int)(voltage*10))%10;
+  70   1      }
+  71          void frequency_show()
+  72          {
+  73   1          buffer[0]=23;buffer[1]=10;buffer[2]=10;
+  74   1          (frequency>=10000)?(buffer[3]=frequency/10000):(buffer[3]=10);
+  75   1          (frequency>=1000)?(buffer[4]=frequency%10000/1000):(buffer[4]=10);
+  76   1          (frequency>=100)?(buffer[5]=frequency%1000/100):(buffer[5]=10);
+  77   1          buffer[6]=frequency%100/10;
+  78   1          buffer[7]=frequency%10;
+  79   1      }
+  80          void temperature_show()
+  81          {
+  82   1          buffer[0]=24;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  83   1          buffer[4]=((int)(temperature*100))/1000;
+  84   1          buffer[5]=((int)(temperature*100))%1000/100+11;
+  85   1          buffer[6]=((int)(temperature*100))%100/10;
+  86   1          buffer[7]=((int)(temperature*100))%10;
+  87   1      }
+  88          void voltage_history_show()
+  89          {
+  90   1          buffer[0]=25;buffer[1]=22;buffer[2]=10;buffer[3]=10;
+  91   1          buffer[4]=10;buffer[5]=10;
+  92   1          buffer[6]=voltage_record/10+11;
+  93   1          buffer[7]=voltage_record%10;
+  94   1      }
+  95          void frequency_history_show()
+  96          {
+  97   1          buffer[0]=25;buffer[1]=23;buffer[2]=10;
+  98   1          (frequency_record>=10000)?(buffer[3]=frequency_record/10000):(buffer[3]=10);
+  99   1          (frequency_record>=1000)?(buffer[4]=frequency_record%10000/1000):(buffer[4]=10);
+ 100   1          (frequency_record>=100)?(buffer[5]=frequency_record%1000/100):(buffer[5]=10);
+ 101   1          buffer[6]=frequency_record%100/10;
+ 102   1          buffer[7]=frequency_record%10;
+ 103   1      }
+ 104          void temperature_history_show()
+ 105          {
+ 106   1          buffer[0]=25;buffer[1]=24;buffer[2]=10;buffer[3]=10;
+ 107   1          buffer[4]=temperature_record/1000;
+ 108   1          buffer[5]=temperature_record%1000/100+11;
+ 109   1          buffer[6]=temperature_record%100/10;
+ 110   1          buffer[7]=temperature_record%10;
+ 111   1      }
+ 112          void voltage_yu()
+ 113          {
+ 114   1          buffer[0]=26;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+ 115   1          buffer[4]=10;buffer[5]=10;
+ 116   1          buffer[6]=((char)(voltage_standard*10))/10+11;
+C51 COMPILER V9.60.0.0   SHOW                                                              06/05/2023 19:34:44 PAGE 3   
+
+ 117   1          buffer[7]=((char)(voltage_standard*10))%10;
+ 118   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    854    ----
+   CONSTANT SIZE    =     27    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

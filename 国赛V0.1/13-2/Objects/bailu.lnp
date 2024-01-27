@@ -1,0 +1,11 @@
+".\Objects\STARTUP.obj",
+".\Objects\woqu.obj",
+".\Objects\init.obj",
+".\Objects\show.obj",
+".\Objects\BTN.obj",
+".\Objects\iic.obj",
+".\Objects\ultrasonic.obj",
+".\Objects\jidianqi.obj",
+".\Objects\led.obj" 
+TO ".\Objects\bailu" 
+PRINT(".\Listings\bailu.m51") RAMSIZE(256) 

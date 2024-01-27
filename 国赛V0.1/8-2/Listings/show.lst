@@ -1,0 +1,94 @@
+C51 COMPILER V9.60.0.0   SHOW                                                              06/06/2023 19:14:17 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SHOW
+OBJECT MODULE PLACED IN .\Objects\show.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE show.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\show.lst) TABS(2) OBJECT(.\Objects\show.obj)
+
+line level    source
+
+   1          #include "show.h"
+   2          
+   3          code unsigned char duanma[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0x8e};
+   4          unsigned char buffer[8]={10,10,10,10,10,10,10,10};
+   5          extern unsigned char jilu_distance[10];
+   6          
+   7          unsigned char weixuan;
+   8          unsigned char show_mod;
+   9          extern unsigned char old_distance_mod;//加和模式或过去模式
+  10          extern unsigned char jilu_count,reme_count;
+  11          
+  12          //测量值
+  13          extern unsigned char distance,old_distance;
+  14          //标准值
+  15          extern unsigned char distance_standard;
+  16          
+  17          void display()
+  18          {
+  19   1          P0=0xff;
+  20   1          P2=(P2&0x1f)|0xe0;
+  21   1          P2&=0x1f;
+  22   1        
+  23   1          P0=1<<weixuan;
+  24   1          P2=(P2&0x1f)|0xc0;
+  25   1          P2&=0x1f;
+  26   1        
+  27   1          P0=duanma[buffer[weixuan]];
+  28   1          P2=(P2&0x1f)|0xe0;
+  29   1          P2&=0x1f;
+  30   1        
+  31   1          if(++weixuan==8){weixuan=0;}
+  32   1      }
+  33          
+  34          void fen()
+  35          {
+  36   1          switch(show_mod)
+  37   1          {
+  38   2            case 0:show_distance();break;
+  39   2            case 1:show_history();break;
+  40   2            case 2:show_parameter();break;
+  41   2          }
+  42   1      }
+  43          void show_distance()
+  44          {
+  45   1          buffer[0]=old_distance_mod;buffer[1]=10;
+  46   1          buffer[2]=old_distance/100;
+  47   1          buffer[3]=old_distance%100/10;
+  48   1          buffer[4]=old_distance%10;
+  49   1          buffer[5]=distance/100;
+  50   1          buffer[6]=distance%100/10;
+  51   1          buffer[7]=distance%10;
+  52   1      }
+  53          void show_history()
+  54          {
+C51 COMPILER V9.60.0.0   SHOW                                                              06/06/2023 19:14:17 PAGE 2   
+
+  55   1          buffer[0]=(reme_count+1)/10;
+  56   1          buffer[1]=(reme_count+1)%10;
+  57   1          buffer[2]=10;buffer[3]=10;buffer[4]=10;
+  58   1          buffer[5]=jilu_distance[reme_count]/100;
+  59   1          buffer[6]=jilu_distance[reme_count]%100/10;
+  60   1          buffer[7]=jilu_distance[reme_count]%10;
+  61   1      }
+  62          void show_parameter()
+  63          {
+  64   1          buffer[0]=11;buffer[1]=10;buffer[2]=10;buffer[3]=10;
+  65   1          buffer[4]=10;buffer[5]=10;
+  66   1          buffer[6]=distance_standard/10;
+  67   1          buffer[7]=distance_standard%10;
+  68   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    278    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

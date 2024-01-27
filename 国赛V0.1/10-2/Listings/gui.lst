@@ -1,0 +1,188 @@
+C51 COMPILER V9.60.0.0   GUI                                                               06/09/2023 21:16:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE GUI
+OBJECT MODULE PLACED IN .\Objects\gui.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE gui.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\gui.lst) TABS(2) OBJECT(.\Objects\gui.obj)
+
+line level    source
+
+   1          #include "stc15f2k60s2.h"
+   2          #include "init.h"
+   3          #include "display.h"
+   4          #include "key.h"
+   5          #include "onewire.h"
+   6          #include "ultrasonic.h"
+   7          #include "iic.h"
+   8          #include "led.h"
+   9          #include "series.h"
+  10          #include "string.h"
+  11          #include "stdio.h"
+  12          
+  13          unsigned char rxstring[20];
+  14          unsigned char txstring[20];
+  15          
+  16          extern unsigned char key_value,old_key_value;
+  17          unsigned char temperature_start_flag;
+  18          unsigned char sonic_start_flag;
+  19          unsigned char button_flag;
+  20          unsigned char dac_start_flag=1;
+  21          unsigned char done=0;
+  22          unsigned char n=0;//串口接收数据变量
+  23          unsigned char uart_flag=0;//串口接收完毕
+  24          //测量值
+  25          float true_temperature;
+  26          unsigned char distance;
+  27          unsigned int change_time_of_parameter;
+  28          //参数值
+  29          char temperature_parameter=30;
+  30          char distance_parameter=35;
+  31          char old_temperature_parameter=30;
+  32          char old_distance_parameter=35;
+  33          
+  34          
+  35          void temperature_start();
+  36          void sonic_start();
+  37          void uart_start();
+  38          
+  39          void main()
+  40          {
+  41   1          change_time_of_parameter=read_eeprom(0x00);
+  42   1          close_buzz();
+  43   1          close_led(); 
+  44   1          pcf8591_init();
+  45   1          PCA_init();
+  46   1          Timer1Init();
+  47   1          UartInit();
+  48   1          EA=1;
+  49   1          while(1)
+  50   1          {
+  51   2              fen();
+  52   2              temperature_start();
+  53   2              sonic_start();
+  54   2              uart_start();
+C51 COMPILER V9.60.0.0   GUI                                                               06/09/2023 21:16:15 PAGE 2   
+
+  55   2          }
+  56   1      }
+  57          
+  58          void timer1_proc() interrupt 3
+  59          {
+  60   1          static unsigned char a;
+  61   1          static unsigned char tem;
+  62   1          static unsigned int son;
+  63   1          static unsigned int chang;
+  64   1          display();
+  65   1          if(++a==10)
+  66   1          {
+  67   2              a=0;
+  68   2              old_key_value=key_value;
+  69   2              key_value=read_keyboard();
+  70   2              if(old_key_value<key_value){key_proc();}
+  71   2              if(old_key_value>key_value){done=0;}
+  72   2              //dac
+  73   2              if(dac_start_flag==1)
+  74   2              {
+  75   3                  if(distance<=distance_parameter){pcf8591_dac(102);}
+  76   3                  if(distance>distance_parameter){pcf8591_dac(204);}
+  77   3              }
+  78   2              if(dac_start_flag==0){pcf8591_dac(20);}
+  79   2              //led
+  80   2              led_pan();
+  81   2              led();
+  82   2          }
+  83   1          if(++tem==100)
+  84   1          {
+  85   2              tem=0;
+  86   2              temperature_start_flag=1;
+  87   2          }
+  88   1          if(++son==300)
+  89   1          {
+  90   2              son=0;
+  91   2              sonic_start_flag=1;
+  92   2          }
+  93   1          if(key_value!=0)//判断长按键
+  94   1          {
+  95   2              chang++;
+  96   2              if(chang>=1000&&done==0)
+  97   2              {
+  98   3                 key_proc_long();
+  99   3                 done=1;
+ 100   3                 chang=0;
+ 101   3              }
+ 102   2          }
+ 103   1      }
+ 104          
+ 105          void uart() interrupt 4//接受
+ 106          {
+ 107   1          unsigned char temp;
+ 108   1          if(RI)
+ 109   1          {
+ 110   2              temp=SBUF;
+ 111   2              if(temp=='\n')
+ 112   2              {
+ 113   3                  rxstring[n]='\n';
+ 114   3                  uart_flag=1;//收完了
+ 115   3                  n=0;
+ 116   3              }
+C51 COMPILER V9.60.0.0   GUI                                                               06/09/2023 21:16:15 PAGE 3   
+
+ 117   2              else
+ 118   2              {rxstring[n++]=temp;}
+ 119   2              RI=0;
+ 120   2              
+ 121   2      //        P0|=0x80;
+ 122   2      //        P2=(P2&0x1f)|0x80;
+ 123   2      //        P2&=0x1f;
+ 124   2          }
+ 125   1      }
+ 126          
+ 127          void temperature_start()
+ 128          {
+ 129   1          if(temperature_start_flag==1)
+ 130   1          {
+ 131   2              temperature_start_flag=0;
+ 132   2              true_temperature=temperature_massure();
+ 133   2          }
+ 134   1      } 
+ 135          
+ 136          void sonic_start()
+ 137          {
+ 138   1          if(sonic_start_flag==1)
+ 139   1          {
+ 140   2              sonic_start_flag=0;
+ 141   2              distance=sonic();
+ 142   2              if(distance>99){distance=99;}
+ 143   2          }
+ 144   1      } 
+ 145          
+ 146          void uart_start()
+ 147          {
+ 148   1          if((uart_flag==1)&&(strcmp(rxstring,"ST\r\n")==0))
+ 149   1          {
+ 150   2              sprintf(txstring,"$%d,%3.2f\r\n",(int)distance,true_temperature);
+ 151   2              Uart_Send(txstring);
+ 152   2              uart_flag=0;
+ 153   2          }
+ 154   1          if((uart_flag==1)&&(strcmp(rxstring,"PARA\r\n")==0))
+ 155   1          {
+ 156   2              sprintf(txstring,"$%d,%d\r\n",(int)distance_parameter,(int)temperature_parameter);
+ 157   2              Uart_Send(txstring);
+ 158   2              uart_flag=0;
+ 159   2          }
+ 160   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    545    ----
+   CONSTANT SIZE    =     33    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     64    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

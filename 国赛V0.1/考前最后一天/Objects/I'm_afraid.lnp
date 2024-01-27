@@ -1,0 +1,13 @@
+".\Objects\STARTUP.obj",
+".\Objects\shift.obj",
+".\Objects\init.obj",
+".\Objects\key.obj",
+".\Objects\show.obj",
+".\Objects\ds1302.obj",
+".\Objects\iic.obj",
+".\Objects\onewire.obj",
+".\Objects\ultrasonic.obj",
+".\Objects\uart.obj",
+".\Objects\led.obj" 
+TO ".\Objects\I'm_afraid" 
+PRINT(".\Listings\I'm_afraid.m51") RAMSIZE(256) 

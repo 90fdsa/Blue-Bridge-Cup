@@ -1,0 +1,547 @@
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WOXIUYUAN
+OBJECT MODULE PLACED IN .\Objects\woxiuyuan.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE woxiuyuan.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEN
+                    -D PRINT(.\Listings\woxiuyuan.lst) TABS(2) OBJECT(.\Objects\woxiuyuan.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"
+   2          #include "onewire.h"
+   3          #include "ds1302.h"
+   4          
+   5          #define uchar unsigned char
+   6          #define uint unsigned int
+   7          
+   8          code uchar duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,0xbf,0xc6};
+   9          uchar buffer[]={10,10,10,10,10,10,10,10};
+  10          char time_stand[3];
+  11          char alarm_stand[3]={0,0,0};
+  12          
+  13          uchar weixuan;
+  14          uchar key_value=0;
+  15          uchar old_key_value=0;
+  16          uchar hours,minutes,seconds;
+  17          uchar tiaozheng_mod=0;
+  18          uchar time_tiaozheng=0;
+  19          uchar one_second=0;
+  20          uchar pause_flag=0;
+  21          uchar alarm_action=0;
+  22          uchar led_flag=0;
+  23          uchar blink_times=0;
+  24          uchar tem_show=0;
+  25          float tempera;
+  26          
+  27          uchar read_keyboard();
+  28          void display();
+  29          void key_proc();
+  30          void read_time();
+  31          void how_to_display();
+  32          void palse_time();
+  33          void start_time();
+  34          void alarm_do();
+  35          void led_do();
+  36          void key_trigger();
+  37          
+  38          void close_buzz()
+  39          {
+  40   1          P0=0x00;
+  41   1          P2=(P2&0X1F)|0XA0;
+  42   1          P2&=0X1F;
+  43   1      }
+  44          
+  45          void close_led()
+  46          {
+  47   1          P0=0xff;
+  48   1          P2=(P2&0X1F)|0X80;
+  49   1          P2&=0X1F;
+  50   1      }
+  51          
+  52          void Timer0Init(void)   //1000微秒@12.000MHz
+  53          {
+  54   1        AUXR &= 0x7F;   //定时器时钟12T模式
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 2   
+
+  55   1        TMOD &= 0xF0;   //设置定时器模式
+  56   1        TL0 = 0x18;   //设置定时初值
+  57   1        TH0 = 0xFC;   //设置定时初值
+  58   1        TF0 = 0;    //清除TF0标志
+  59   1        TR0 = 1;    //定时器0开始计时
+  60   1        ET0 = 1;
+  61   1      }
+  62          
+  63          
+  64          void main()
+  65          {
+  66   1          close_buzz();
+  67   1          close_led();
+  68   1          Timer0Init();
+  69   1          EA=1;
+  70   1          set_time(23,59,55);
+  71   1        
+  72   1          while(1)
+  73   1          {
+  74   2              read_time();
+  75   2              how_to_display();
+  76   2              
+  77   2              
+  78   2          }
+  79   1      }
+  80          
+  81          void timer0_proc() interrupt 1
+  82          {
+  83   1          static uchar i=0;
+  84   1          static uint dumiao=0;
+  85   1          static uint blink=0;
+  86   1          static uint tem=0;
+  87   1          display();
+  88   1          if(++i==10)
+  89   1          {
+  90   2              i=0;
+  91   2              old_key_value=key_value;
+  92   2              key_value=read_keyboard();
+  93   2              key_trigger();
+  94   2              if(old_key_value<key_value){key_proc();}
+  95   2              if(old_key_value>key_value){tem_show=0;}
+  96   2              alarm_do();
+  97   2              led_do();
+  98   2          }
+  99   1          if(++dumiao==1000)
+ 100   1          {
+ 101   2              dumiao=0;
+ 102   2              one_second=~one_second;
+ 103   2          }
+ 104   1          if(++tem==300)
+ 105   1          {
+ 106   2              tem=0;
+ 107   2              tempera=rd_temperature();
+ 108   2          }
+ 109   1          if(alarm_action==1)
+ 110   1          {
+ 111   2              blink++;
+ 112   2              if(blink==200)
+ 113   2              {
+ 114   3                  blink=0;
+ 115   3                  led_flag=~led_flag;
+ 116   3                  blink_times++;
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 3   
+
+ 117   3                  if(blink_times==25 || key_value!=0)
+ 118   3                  {
+ 119   4                      alarm_action=0;
+ 120   4                      blink=0;
+ 121   4                      blink_times=0;
+ 122   4                      led_flag=0;
+ 123   4                  }
+ 124   3              }
+ 125   2          }
+ 126   1      }
+ 127          uchar read_keyboard()
+ 128          {
+ 129   1          uint key;
+ 130   1          uchar key_va;  
+ 131   1        
+ 132   1          P3|=0x0f;
+ 133   1          P44=0;P42=1;P35=1;P34=1;
+ 134   1          key=P3&0x0f;
+ 135   1          P44=1;P42=0;P35=1;P34=1;
+ 136   1          key=(key<<4)|(P3&0x0f);
+ 137   1          P44=1;P42=1;P35=0;P34=1;
+ 138   1          key=(key<<4)|(P3&0x0f);
+ 139   1          P44=1;P42=1;P35=1;P34=0;
+ 140   1          key=(key<<4)|(P3&0x0f);
+ 141   1        
+ 142   1          switch(~key)
+ 143   1          {
+ 144   2            case 0x1000:key_va=1;break;
+ 145   2            case 0x0100:key_va=2;break;
+ 146   2            case 0x0010:key_va=3;break;
+ 147   2            case 0x0001:key_va=4;break;
+ 148   2            case 0x2000:key_va=5;break;
+ 149   2            case 0x0200:key_va=6;break;
+ 150   2            case 0x0020:key_va=7;break;
+ 151   2            case 0x0002:key_va=8;break;
+ 152   2            case 0x4000:key_va=9;break;
+ 153   2            case 0x0400:key_va=10;break;
+ 154   2            case 0x0040:key_va=11;break;
+ 155   2            case 0x0004:key_va=12;break;
+ 156   2            case 0x8000:key_va=13;break;
+ 157   2            case 0x0800:key_va=14;break;
+ 158   2            case 0x0080:key_va=15;break;
+ 159   2            case 0x0008:key_va=16;break;
+ 160   2            default:key_va=0;break;
+ 161   2          }
+ 162   1          
+ 163   1          return key_va;
+ 164   1      }
+ 165          
+ 166          void display()
+ 167          {
+ 168   1          P0=0xff;
+ 169   1          P2=(P2&0X1F)|0Xe0;
+ 170   1          P2&=0X1F;
+ 171   1        
+ 172   1          P0=1<<weixuan;
+ 173   1          P2=(P2&0X1F)|0Xc0;
+ 174   1          P2&=0X1F;
+ 175   1        
+ 176   1          P0=duanma[buffer[weixuan]];
+ 177   1          P2=(P2&0X1F)|0Xe0;
+ 178   1          P2&=0X1F;
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 4   
+
+ 179   1        
+ 180   1          if(++weixuan==8){weixuan=0;}
+ 181   1      }
+ 182          
+ 183          void key_proc()
+ 184          {
+ 185   1          switch(key_value)
+ 186   1          {
+ 187   2            case 9:
+ 188   2            {  
+ 189   3                tiaozheng_mod=1;
+ 190   3                time_tiaozheng++;
+ 191   3                if(time_tiaozheng==1){palse_time();}
+ 192   3                if(time_tiaozheng==4)
+ 193   3                {
+ 194   4                    time_tiaozheng=0;
+ 195   4                    tiaozheng_mod=0;
+ 196   4                    set_time(time_stand[0],time_stand[1],time_stand[2]);
+ 197   4                    start_time();
+ 198   4                }
+ 199   3            }break;
+ 200   2            case 13:
+ 201   2            {
+ 202   3                tiaozheng_mod=2;
+ 203   3                time_tiaozheng++;
+ 204   3                if(time_tiaozheng==4)
+ 205   3                {
+ 206   4                    time_tiaozheng=0;
+ 207   4                    tiaozheng_mod=0;
+ 208   4                }
+ 209   3            }break;
+ 210   2            case 10:
+ 211   2            {
+ 212   3                if(tiaozheng_mod==1)
+ 213   3                {
+ 214   4                    if(time_tiaozheng==1)
+ 215   4                    {
+ 216   5                        time_stand[0]++;
+ 217   5                        if(time_stand[0]==24){time_stand[0]=0;}
+ 218   5                    }
+ 219   4                    if(time_tiaozheng==2)
+ 220   4                    {
+ 221   5                        time_stand[1]++;
+ 222   5                        if(time_stand[1]==60){time_stand[1]=0;}
+ 223   5                    }
+ 224   4                    if(time_tiaozheng==3)
+ 225   4                    {
+ 226   5                        time_stand[2]++;
+ 227   5                        if(time_stand[2]==60){time_stand[2]=0;}
+ 228   5                    }
+ 229   4                }
+ 230   3                if(tiaozheng_mod==2)
+ 231   3                {
+ 232   4                    if(time_tiaozheng==1)
+ 233   4                    {
+ 234   5                        alarm_stand[0]++;
+ 235   5                        if(alarm_stand[0]==24){alarm_stand[0]=0;}
+ 236   5                    }
+ 237   4                    if(time_tiaozheng==2)
+ 238   4                    {
+ 239   5                        alarm_stand[1]++;
+ 240   5                        if(alarm_stand[1]==60){alarm_stand[1]=0;}
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 5   
+
+ 241   5                    }
+ 242   4                    if(time_tiaozheng==3)
+ 243   4                    {
+ 244   5                        alarm_stand[2]++;
+ 245   5                        if(alarm_stand[2]==60){alarm_stand[2]=0;}
+ 246   5                    }
+ 247   4                }
+ 248   3            }break;
+ 249   2            case 14:
+ 250   2            {
+ 251   3                if(tiaozheng_mod==1)
+ 252   3                {
+ 253   4                    if(time_tiaozheng==1)
+ 254   4                    {
+ 255   5                        time_stand[0]--;
+ 256   5                        if(time_stand[0]<0){time_stand[0]=23;}
+ 257   5                    }
+ 258   4                    if(time_tiaozheng==2)
+ 259   4                    {
+ 260   5                        time_stand[1]--;
+ 261   5                        if(time_stand[1]<0){time_stand[1]=59;}
+ 262   5                    }
+ 263   4                    if(time_tiaozheng==3)
+ 264   4                    {
+ 265   5                        time_stand[2]--;
+ 266   5                        if(time_stand[2]<0){time_stand[2]=59;}
+ 267   5                    }
+ 268   4                }
+ 269   3                if(tiaozheng_mod==2)
+ 270   3                {
+ 271   4                    if(time_tiaozheng==1)
+ 272   4                    {
+ 273   5                        alarm_stand[0]--;
+ 274   5                        if(alarm_stand[0]<0){alarm_stand[0]=23;}
+ 275   5                    }
+ 276   4                    if(time_tiaozheng==2)
+ 277   4                    {
+ 278   5                        alarm_stand[1]--;
+ 279   5                        if(alarm_stand[1]<0){alarm_stand[1]=59;}
+ 280   5                    }
+ 281   4                    if(time_tiaozheng==3)
+ 282   4                    {
+ 283   5                        alarm_stand[2]--;
+ 284   5                        if(alarm_stand[2]<0){alarm_stand[2]=59;}
+ 285   5                    }
+ 286   4                }
+ 287   3            }break;
+ 288   2          }
+ 289   1      }
+ 290          
+ 291          void read_time()
+ 292          {
+ 293   1          uchar a,b,c;   
+ 294   1        
+ 295   1          a=Read_Ds1302_Byte(0x85);
+ 296   1          b=Read_Ds1302_Byte(0x83);
+ 297   1          c=Read_Ds1302_Byte(0x81);
+ 298   1        
+ 299   1          if(pause_flag==1)
+ 300   1          {c&=0x7f;}
+ 301   1        
+ 302   1          hours=a/16*10+a%16;
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 6   
+
+ 303   1          minutes=b/16*10+b%16;
+ 304   1          seconds=c/16*10+c%16;
+ 305   1          
+ 306   1          if(pause_flag==1)
+ 307   1          {
+ 308   2              time_stand[0]=hours;
+ 309   2              time_stand[1]=minutes;
+ 310   2              time_stand[2]=seconds;
+ 311   2              pause_flag=0;
+ 312   2          }
+ 313   1            
+ 314   1      }
+ 315          
+ 316          void palse_time()
+ 317          {
+ 318   1          uchar a;
+ 319   1          a=Read_Ds1302_Byte(0x81);
+ 320   1          Write_Ds1302_Byte(0x8e,0x00);
+ 321   1          Write_Ds1302_Byte(0x80,a|0x80);pause_flag=1;
+ 322   1          Write_Ds1302_Byte(0x8e,0x80);
+ 323   1      }
+ 324          
+ 325          void start_time()
+ 326          {
+ 327   1          uchar a;
+ 328   1          a=Read_Ds1302_Byte(0x81);
+ 329   1          Write_Ds1302_Byte(0x8e,0x00);
+ 330   1          Write_Ds1302_Byte(0x80,a&0x7f);//pause_flag=0;
+ 331   1          Write_Ds1302_Byte(0x8e,0x80);
+ 332   1      }
+ 333          
+ 334          void how_to_display()
+ 335          {
+ 336   1          if(tiaozheng_mod==0)
+ 337   1          {
+ 338   2              if(tem_show==0)
+ 339   2              {
+ 340   3                  buffer[0]=hours/10;buffer[1]=hours%10;
+ 341   3                  buffer[2]=11;
+ 342   3                  buffer[3]=minutes/10;buffer[4]=minutes%10;
+ 343   3                  buffer[5]=11;
+ 344   3                  buffer[6]=seconds/10;buffer[7]=seconds%10;
+ 345   3              }
+ 346   2              else
+ 347   2              {  
+ 348   3                  buffer[0]=10;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+ 349   3                  buffer[5]=((char)tempera)/10;
+ 350   3                  buffer[6]=((char)tempera)%10;
+ 351   3                  buffer[7]=12;
+ 352   3              }
+ 353   2          }
+ 354   1          if(tiaozheng_mod==1)
+ 355   1          {
+ 356   2              if(time_tiaozheng==1)
+ 357   2              {
+ 358   3                  if(one_second!=0)
+ 359   3                  {
+ 360   4                      buffer[0]=time_stand[0]/10;buffer[1]=time_stand[0]%10;
+ 361   4                      buffer[2]=11;
+ 362   4                      buffer[3]=time_stand[1]/10;buffer[4]=time_stand[1]%10;
+ 363   4                      buffer[5]=11;
+ 364   4                      buffer[6]=time_stand[2]/10;buffer[7]=time_stand[2]%10;
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 7   
+
+ 365   4                  }
+ 366   3                  else
+ 367   3                  {
+ 368   4                      buffer[0]=10;buffer[1]=10;
+ 369   4                      buffer[2]=11;
+ 370   4                      buffer[3]=time_stand[1]/10;buffer[4]=time_stand[1]%10;
+ 371   4                      buffer[5]=11;
+ 372   4                      buffer[6]=time_stand[2]/10;buffer[7]=time_stand[2]%10;
+ 373   4                  }
+ 374   3              }
+ 375   2              if(time_tiaozheng==2)
+ 376   2              {
+ 377   3                  if(one_second!=0)
+ 378   3                  {
+ 379   4                      buffer[0]=time_stand[0]/10;buffer[1]=time_stand[0]%10;
+ 380   4                      buffer[2]=11;
+ 381   4                      buffer[3]=time_stand[1]/10;buffer[4]=time_stand[1]%10;
+ 382   4                      buffer[5]=11;
+ 383   4                      buffer[6]=time_stand[2]/10;buffer[7]=time_stand[2]%10;
+ 384   4                  }
+ 385   3                  else
+ 386   3                  {
+ 387   4                      buffer[0]=time_stand[0]/10;buffer[1]=time_stand[0]%10;
+ 388   4                      buffer[2]=11;
+ 389   4                      buffer[3]=10;buffer[4]=10;
+ 390   4                      buffer[5]=11;
+ 391   4                      buffer[6]=time_stand[2]/10;buffer[7]=time_stand[2]%10;
+ 392   4                  }
+ 393   3              }
+ 394   2              if(time_tiaozheng==3)
+ 395   2              {
+ 396   3                  if(one_second!=0)
+ 397   3                  {
+ 398   4                      buffer[0]=time_stand[0]/10;buffer[1]=time_stand[0]%10;
+ 399   4                      buffer[2]=11;
+ 400   4                      buffer[3]=time_stand[1]/10;buffer[4]=time_stand[1]%10;
+ 401   4                      buffer[5]=11;
+ 402   4                      buffer[6]=time_stand[2]/10;buffer[7]=time_stand[2]%10;
+ 403   4                  }
+ 404   3                  else
+ 405   3                  {
+ 406   4                      buffer[0]=time_stand[0]/10;buffer[1]=time_stand[0]%10;
+ 407   4                      buffer[2]=11;
+ 408   4                      buffer[3]=time_stand[1]/10;buffer[4]=time_stand[1]%10;
+ 409   4                      buffer[5]=11;
+ 410   4                      buffer[6]=10;buffer[7]=10;
+ 411   4                  }
+ 412   3              }
+ 413   2          }
+ 414   1          if(tiaozheng_mod==2)
+ 415   1          {
+ 416   2              if(time_tiaozheng==1)
+ 417   2              {
+ 418   3                  if(one_second!=0)
+ 419   3                  {
+ 420   4                      buffer[0]=alarm_stand[0]/10;buffer[1]=alarm_stand[0]%10;
+ 421   4                      buffer[2]=11;
+ 422   4                      buffer[3]=alarm_stand[1]/10;buffer[4]=alarm_stand[1]%10;
+ 423   4                      buffer[5]=11;
+ 424   4                      buffer[6]=alarm_stand[2]/10;buffer[7]=alarm_stand[2]%10;
+ 425   4                  }
+ 426   3                  else
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 8   
+
+ 427   3                  {
+ 428   4                      buffer[0]=10;buffer[1]=10;
+ 429   4                      buffer[2]=11;
+ 430   4                      buffer[3]=alarm_stand[1]/10;buffer[4]=alarm_stand[1]%10;
+ 431   4                      buffer[5]=11;
+ 432   4                      buffer[6]=alarm_stand[2]/10;buffer[7]=alarm_stand[2]%10;
+ 433   4                  }
+ 434   3              }
+ 435   2              if(time_tiaozheng==2)
+ 436   2              {
+ 437   3                  if(one_second!=0)
+ 438   3                  {
+ 439   4                      buffer[0]=alarm_stand[0]/10;buffer[1]=alarm_stand[0]%10;
+ 440   4                      buffer[2]=11;
+ 441   4                      buffer[3]=alarm_stand[1]/10;buffer[4]=alarm_stand[1]%10;
+ 442   4                      buffer[5]=11;
+ 443   4                      buffer[6]=alarm_stand[2]/10;buffer[7]=alarm_stand[2]%10;
+ 444   4                  }
+ 445   3                  else
+ 446   3                  {
+ 447   4                      buffer[0]=alarm_stand[0]/10;buffer[1]=alarm_stand[0]%10;
+ 448   4                      buffer[2]=11;
+ 449   4                      buffer[3]=10;buffer[4]=10;
+ 450   4                      buffer[5]=11;
+ 451   4                      buffer[6]=alarm_stand[2]/10;buffer[7]=alarm_stand[2]%10;
+ 452   4                  }
+ 453   3              }
+ 454   2              if(time_tiaozheng==3)
+ 455   2              {
+ 456   3                  if(one_second!=0)
+ 457   3                  {
+ 458   4                      buffer[0]=alarm_stand[0]/10;buffer[1]=alarm_stand[0]%10;
+ 459   4                      buffer[2]=11;
+ 460   4                      buffer[3]=alarm_stand[1]/10;buffer[4]=alarm_stand[1]%10;
+ 461   4                      buffer[5]=11;
+ 462   4                      buffer[6]=alarm_stand[2]/10;buffer[7]=alarm_stand[2]%10;
+ 463   4                  }
+ 464   3                  else
+ 465   3                  {
+ 466   4                      buffer[0]=alarm_stand[0]/10;buffer[1]=alarm_stand[0]%10;
+ 467   4                      buffer[2]=11;
+ 468   4                      buffer[3]=alarm_stand[1]/10;buffer[4]=alarm_stand[1]%10;
+ 469   4                      buffer[5]=11;
+ 470   4                      buffer[6]=10;buffer[7]=10;
+ 471   4                  }
+ 472   3              }
+ 473   2          }
+ 474   1      }
+ 475          
+ 476          void alarm_do()
+ 477          {
+ 478   1          if(hours==alarm_stand[0] & minutes==alarm_stand[1] & seconds==alarm_stand[2])
+ 479   1          {
+ 480   2              alarm_action=1;
+ 481   2          }
+ 482   1      }
+ 483          
+ 484          void led_do()
+ 485          {
+ 486   1          uchar led_value;
+ 487   1          if(led_flag!=0){led_value|=0x01;}
+ 488   1          else{led_value&=0xfe;}
+C51 COMPILER V9.60.0.0   WOXIUYUAN                                                         03/21/2023 13:58:18 PAGE 9   
+
+ 489   1          
+ 490   1          P0=~led_value;
+ 491   1          P2=(P2&0X1F)|0X80;
+ 492   1          P2&=0X1F;
+ 493   1      }
+ 494          
+ 495          void key_trigger()
+ 496          {
+ 497   1          switch(key_value)
+ 498   1          {
+ 499   2            case 14:
+ 500   2            {
+ 501   3                if(tiaozheng_mod==0)
+ 502   3                {
+ 503   4                    tem_show=1;
+ 504   4                }
+ 505   3            }break;
+ 506   2          }
+ 507   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2107    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     39       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

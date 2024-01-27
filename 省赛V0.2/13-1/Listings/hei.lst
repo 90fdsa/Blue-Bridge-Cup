@@ -1,0 +1,380 @@
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HEI
+OBJECT MODULE PLACED IN .\Objects\hei.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE hei.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\hei.lst) TABS(2) OBJECT(.\Objects\hei.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"
+   2          #include "ds1302.h"
+   3          #include "onewire.h"
+   4          #include "intrins.h"
+   5          
+   6          code unsigned char duanma[]={0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8,0x80,0x90,0xff,
+   7                                       0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10,0xff,
+   8                                       0xc1,0xbf};
+   9          unsigned char buffer[]={10,10,10,10,10,10,10,10};
+  10          
+  11          unsigned char weixuan=0;
+  12          unsigned char key_value=0;
+  13          unsigned char old_key_value=0;
+  14          float temperature;
+  15          unsigned char hours=1,minutes=1,seconds=1;
+  16          unsigned char show_mod=1;
+  17          unsigned char temperature_standard=25;
+  18          unsigned char jidian_state=0;
+  19          unsigned char control_state=0;
+  20          unsigned char led1=0;
+  21          unsigned char led2=0;
+  22          unsigned char led3=0;
+  23          unsigned char pause=0;
+  24          unsigned char jidian_ok=0;
+  25          unsigned char time_show_mod;
+  26          
+  27          unsigned char read_keyboard();
+  28          void display();
+  29          void get_time();
+  30          void fen();
+  31          void show_temperature();
+  32          void show_time1();
+  33          void show_time2();
+  34          void show_standard();
+  35          void key_proc();
+  36          void key_proc_short();
+  37          void temp_control();
+  38          void time_control();
+  39          void control_fen();
+  40          void led_control();
+  41          
+  42          void close_led()
+  43          {
+  44   1          P0=0xff;
+  45   1          P2=(P2&0x1f)|0x80;
+  46   1          P2&=0x1f;
+  47   1      }
+  48          
+  49          void close_buzz()
+  50          {
+  51   1          P0=0x00;
+  52   1          P2=(P2&0x1f)|0xa0;
+  53   1          P2&=0x1f;
+  54   1      }
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 2   
+
+  55          
+  56          void Timer0Init(void)   //1000微秒@12.000MHz
+  57          {
+  58   1        AUXR |= 0x80;   //定时器时钟1T模式
+  59   1        TMOD &= 0xF0;   //设置定时器模式
+  60   1        TL0 = 0x20;   //设置定时初值
+  61   1        TH0 = 0xD1;   //设置定时初值
+  62   1        TF0 = 0;    //清除TF0标志
+  63   1        TR0 = 1;    //定时器0开始计时
+  64   1        ET0 = 1;
+  65   1      }
+  66          
+  67          void main()
+  68          {
+  69   1          set_time(23,59,40);
+  70   1          close_led();
+  71   1          close_buzz();
+  72   1          
+  73   1          Timer0Init();
+  74   1          EA=1;
+  75   1          
+  76   1          while(1)
+  77   1          {
+  78   2              
+  79   2          }     
+  80   1      }
+  81          
+  82          void timer0_proc() interrupt 1
+  83          {
+  84   1          static unsigned char a;
+  85   1          static unsigned int tem;
+  86   1          static unsigned int jidian;
+  87   1          static unsigned int led_1hao;
+  88   1          static unsigned char blink;
+  89   1          display();
+  90   1          
+  91   1          if(++a==10)
+  92   1          {
+  93   2              a=0;
+  94   2              led_control();
+  95   2              old_key_value=key_value;
+  96   2              key_value=read_keyboard();
+  97   2              if(old_key_value<key_value){key_proc();}
+  98   2              if(old_key_value>key_value){time_show_mod=0;}
+  99   2              
+ 100   2              
+ 101   2              get_time();
+ 102   2              fen();
+ 103   2              control_fen();
+ 104   2              key_proc_short();
+ 105   2          }
+ 106   1          if(++tem==300)
+ 107   1          {
+ 108   2              tem=0;
+ 109   2              temperature=rd_temperature();
+ 110   2          }
+ 111   1          if(jidian_state==1)
+ 112   1          {
+ 113   2              jidian++;
+ 114   2              if(jidian==5000){jidian=0;jidian_state=0;}
+ 115   2          }
+ 116   1          if(led1==1)
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 3   
+
+ 117   1          {
+ 118   2              led_1hao++;
+ 119   2              if(led_1hao==5000){led_1hao=0;led1=0;}
+ 120   2          }
+ 121   1          if(jidian_ok==1)
+ 122   1          {
+ 123   2              blink++;
+ 124   2              if(blink==100)
+ 125   2              {
+ 126   3                  blink=0;
+ 127   3                  led3=~led3;
+ 128   3              }
+ 129   2          }
+ 130   1          else
+ 131   1          {
+ 132   2              blink=0;
+ 133   2          }
+ 134   1      }
+ 135          
+ 136          unsigned char read_keyboard()
+ 137          {
+ 138   1          static unsigned char key_val;
+ 139   1          static unsigned int deal;
+ 140   1          
+ 141   1          P3|=0x0f;
+ 142   1          P44=0;P42=1;P35=1;P34=1;
+ 143   1          deal=P3&0x0f;
+ 144   1          P44=1;P42=0;P35=1;P34=1;
+ 145   1          deal=(deal<<4)|(P3&0x0f);
+ 146   1          P44=1;P42=1;P35=0;P34=1;
+ 147   1          deal=(deal<<4)|(P3&0x0f);
+ 148   1          P44=1;P42=1;P35=1;P34=0;
+ 149   1          deal=(deal<<4)|(P3&0x0f);
+ 150   1          switch(~deal)
+ 151   1          {
+ 152   2            case 0x1000:key_val=1;break;
+ 153   2            case 0x0100:key_val=2;break;
+ 154   2            case 0x0010:key_val=3;break;
+ 155   2            case 0x0001:key_val=4;break;
+ 156   2            case 0x2000:key_val=5;break;
+ 157   2            case 0x0200:key_val=6;break;
+ 158   2            case 0x0020:key_val=7;break;
+ 159   2            case 0x0002:key_val=8;break;
+ 160   2            case 0x4000:key_val=9;break;
+ 161   2            case 0x0400:key_val=10;break;
+ 162   2            case 0x0040:key_val=11;break;
+ 163   2            case 0x0004:key_val=12;break;
+ 164   2            case 0x8000:key_val=13;break;
+ 165   2            case 0x0800:key_val=14;break;
+ 166   2            case 0x0080:key_val=15;break;
+ 167   2            case 0x0008:key_val=16;break;
+ 168   2            default:key_val=0;break;
+ 169   2          }
+ 170   1          return key_val;
+ 171   1      }
+ 172          
+ 173          void display()
+ 174          {
+ 175   1          P0=0xff;
+ 176   1          P2=(P2&0x1f)|0xe0;
+ 177   1          P2&=0x1f;
+ 178   1        
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 4   
+
+ 179   1          P0=1<<weixuan;
+ 180   1          P2=(P2&0x1f)|0xc0;
+ 181   1          P2&=0x1f;
+ 182   1        
+ 183   1          P0=duanma[buffer[weixuan]];
+ 184   1          P2=(P2&0x1f)|0xe0;
+ 185   1          P2&=0x1f;
+ 186   1        
+ 187   1          if(++weixuan==8){weixuan=0;}
+ 188   1      }
+ 189          
+ 190          void key_proc()
+ 191          {
+ 192   1          switch(key_value)
+ 193   1          {
+ 194   2            case 15:
+ 195   2            {
+ 196   3                show_mod++;
+ 197   3                if(show_mod==4){show_mod=1;}
+ 198   3            }break;
+ 199   2            case 11:
+ 200   2            {
+ 201   3                control_state=~control_state;
+ 202   3            }break;
+ 203   2            case 16:
+ 204   2            {
+ 205   3                if(show_mod==3)
+ 206   3                {
+ 207   4                    temperature_standard++;
+ 208   4                    if(temperature_standard==100){temperature_standard=10;}
+ 209   4                }
+ 210   3            }break;
+ 211   2            case 12:
+ 212   2            {
+ 213   3                if(show_mod==3)
+ 214   3                {
+ 215   4                    temperature_standard--;
+ 216   4                    if(temperature_standard==9){temperature_standard=99;}
+ 217   4                }
+ 218   3            }break;
+ 219   2          }
+ 220   1      }
+ 221          
+ 222          void key_proc_short()
+ 223          {
+ 224   1          switch(key_value)
+ 225   1          {
+ 226   2            case 12:
+ 227   2            {
+ 228   3                if(show_mod==2)
+ 229   3                {
+ 230   4                    time_show_mod=1;
+ 231   4                }
+ 232   3            }break;
+ 233   2          }
+ 234   1      }
+ 235          void get_time()
+ 236          {
+ 237   1          seconds=Read_Ds1302_Byte(0x81);
+ 238   1          minutes=Read_Ds1302_Byte(0x83);
+ 239   1          hours=Read_Ds1302_Byte(0x85);
+ 240   1          
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 5   
+
+ 241   1          hours=hours/16*10+hours%16;
+ 242   1          minutes=minutes/16*10+minutes%16;
+ 243   1          seconds=seconds/16*10+seconds%16;
+ 244   1      }
+ 245          
+ 246          void fen()
+ 247          {
+ 248   1          switch(show_mod)
+ 249   1          {
+ 250   2            case 1:show_temperature();break;
+ 251   2            case 2:
+ 252   2            {
+ 253   3                if(time_show_mod==0){show_time1();}
+ 254   3                else{show_time2();}
+ 255   3                break;
+ 256   3            }
+ 257   2            case 3:show_standard();break;
+ 258   2          }
+ 259   1      }
+ 260          
+ 261          void show_temperature()
+ 262          {
+ 263   1          buffer[0]=22;buffer[1]=1;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+ 264   1          buffer[5]=((int)(temperature*10))/100;
+ 265   1          buffer[6]=((int)(temperature*10))%100/10+11;
+ 266   1          buffer[7]=((int)(temperature*10))%10;
+ 267   1      }
+ 268          
+ 269          void show_time1()
+ 270          {
+ 271   1          buffer[0]=22;buffer[1]=2;buffer[2]=10;
+ 272   1          buffer[3]=hours/10;
+ 273   1          buffer[4]=hours%10;
+ 274   1          buffer[5]=23;
+ 275   1          buffer[6]=minutes/10;
+ 276   1          buffer[7]=minutes%10;
+ 277   1      }
+ 278          
+ 279          void show_time2()
+ 280          {
+ 281   1          buffer[0]=22;buffer[1]=2;buffer[2]=10;
+ 282   1          buffer[3]=minutes/10;
+ 283   1          buffer[4]=minutes%10;
+ 284   1          buffer[5]=23;
+ 285   1          buffer[6]=seconds/10;
+ 286   1          buffer[7]=seconds%10;
+ 287   1      }
+ 288          
+ 289          
+ 290          void show_standard()
+ 291          {
+ 292   1          buffer[0]=22;buffer[1]=3;buffer[2]=10;buffer[3]=10;
+ 293   1          buffer[4]=10;buffer[5]=10;
+ 294   1          buffer[6]=temperature_standard/10;
+ 295   1          buffer[7]=temperature_standard%10;
+ 296   1      }
+ 297          
+ 298          void temp_control()
+ 299          {
+ 300   1          unsigned char a;
+ 301   1          if(temperature>temperature_standard){a=0x10;jidian_ok=1;}
+ 302   1          else{a=0x00;jidian_ok=0;}
+C51 COMPILER V9.60.0.0   HEI                                                               03/25/2023 15:47:22 PAGE 6   
+
+ 303   1      
+ 304   1          P0=a;
+ 305   1          P2=(P2&0x1f)|0xa0;
+ 306   1          P2&=0x1f;
+ 307   1      }
+ 308          
+ 309          void time_control()
+ 310          {
+ 311   1          unsigned char b;
+ 312   1          if(minutes==0&&seconds==0)
+ 313   1          {jidian_state=1;}
+ 314   1          if(jidian_state==1){b=0x10;jidian_ok=1;}
+ 315   1          else{b=0x00;jidian_ok=0;}
+ 316   1          
+ 317   1          
+ 318   1          P0=b;
+ 319   1          P2=(P2&0x1f)|0xa0;
+ 320   1          P2&=0x1f;
+ 321   1      }
+ 322          
+ 323          void control_fen()
+ 324          {
+ 325   1          if(control_state==0){temp_control();}
+ 326   1          else{time_control();}
+ 327   1      }
+ 328          
+ 329          void led_control()
+ 330          {
+ 331   1          unsigned char c;
+ 332   1          if(minutes==0&&seconds==0){led1=1;}
+ 333   1          if(control_state==0){led2=1;}
+ 334   1          else{led2=0;}
+ 335   1          
+ 336   1          if(led1==1){c|=0x01;}
+ 337   1          else{c&=0xfe;}
+ 338   1          if(led2==1){c|=0x02;}
+ 339   1          else{c&=0xfd;}
+ 340   1          if(led3!=0){c|=0x04;}
+ 341   1          else{c&=0xfb;}
+ 342   1          
+ 343   1          P0=~c;
+ 344   1          P2=(P2&0x1f)|0x80;
+ 345   1          P2&=0x1f;
+ 346   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1272    ----
+   CONSTANT SIZE    =     24    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     39       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

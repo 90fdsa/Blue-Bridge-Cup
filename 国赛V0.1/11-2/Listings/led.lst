@@ -1,0 +1,63 @@
+C51 COMPILER V9.54   LED                                                                   06/01/2023 16:58:55 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LED
+OBJECT MODULE PLACED IN .\Objects\led.obj
+COMPILER INVOKED BY: D:\KEIL5_MDK\C51\BIN\C51.EXE led.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\led
+                    -.lst) TABS(2) OBJECT(.\Objects\led.obj)
+
+line level    source
+
+   1          #include "led.h"
+   2          #include "ds1302.h"
+   3          
+   4          unsigned char ho;
+   5          unsigned char led1,led2,led3;
+   6          unsigned char led3_aux;
+   7          
+   8          extern float temperature,voltage;
+   9          extern unsigned char liangmie;
+  10          extern unsigned char led_can;
+  11          extern char shi_can,tem_can;
+  12          
+  13          
+  14          
+  15          void led_pan()
+  16          {
+  17   1          ho=Read_Ds1302_Byte(0x85);
+  18   1          ho=ho/16*10+ho%16;
+  19   1          if(ho>=shi_can|ho<8){led1=1;}else{led1=0;}
+  20   1          if(temperature>tem_can){led2=1;}else{led2=0;}
+  21   1          if(liangmie==1){led3=1;}
+  22   1      }
+  23          
+  24          void led_run()
+  25          {
+  26   1          unsigned char a;
+  27   1          if(led1==1){a|=0x01;}else{a&=0xfe;}
+  28   1          if(led2==1){a|=0x02;}else{a&=0xfd;}
+  29   1          if(led3_aux==1){a|=0x04;}else{a&=0xfb;}
+  30   1          if(led_can==4&liangmie==1){a|=0x08;}else{a&=0xf7;}
+  31   1          if(led_can==5&liangmie==1){a|=0x10;}else{a&=0xef;}
+  32   1          if(led_can==6&liangmie==1){a|=0x20;}else{a&=0xdf;}
+  33   1          if(led_can==7&liangmie==1){a|=0x40;}else{a&=0xbf;}
+  34   1          if(led_can==8&liangmie==1){a|=0x80;}else{a&=0x7f;}
+  35   1          
+  36   1          P0=~a;
+  37   1          P2=(P2&0x1f)|0x80;
+  38   1          P2&=0x1f;
+  39   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    338    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

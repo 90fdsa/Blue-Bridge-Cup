@@ -1,0 +1,10 @@
+".\Objects\STARTUP.obj",
+".\Objects\lai.obj",
+".\Objects\show.obj",
+".\Objects\key.obj",
+".\Objects\init.obj",
+".\Objects\ultrasonic.obj",
+".\Objects\iic.obj",
+".\Objects\led.obj" 
+TO ".\Objects\let's_start_once_again" 
+PRINT(".\Listings\let's_start_once_again.m51") RAMSIZE(256) 

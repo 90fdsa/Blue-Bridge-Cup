@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\hanberger.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\ahhhh" 
+PRINT(".\Listings\ahhhh.m51") RAMSIZE(256) 

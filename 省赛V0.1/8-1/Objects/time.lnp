@@ -1,0 +1,4 @@
+".\Objects\asdf.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\time" 
+PRINT(".\Listings\time.m51") RAMSIZE(256) 

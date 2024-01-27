@@ -1,0 +1,1 @@
+"ascii.c" OPTIMIZE (8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ascii.lst) TABS (2) OBJECT(.\Objects\ascii.obj)

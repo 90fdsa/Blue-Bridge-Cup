@@ -1,0 +1,1 @@
+"gaokao.c" OPTIMIZE (8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\gaokao.lst) TABS (2) OBJECT(.\Objects\gaokao.obj)

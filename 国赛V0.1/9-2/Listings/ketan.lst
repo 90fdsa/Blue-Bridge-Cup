@@ -1,0 +1,154 @@
+C51 COMPILER V9.60.0.0   KETAN                                                             06/05/2023 19:34:44 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE KETAN
+OBJECT MODULE PLACED IN .\Objects\ketan.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ketan.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\ketan.lst) TABS(2) OBJECT(.\Objects\ketan.obj)
+
+line level    source
+
+   1          #include "stc15f2k60s2.h"
+   2          #include "init.h"
+   3          #include "key.h"
+   4          #include "show.h"
+   5          #include "iic.h"
+   6          #include "onewire.h"
+   7          #include "led.h"
+   8          
+   9          //标记
+  10          extern unsigned char led4,aux4;
+  11          extern unsigned char key_value,old_key_value;
+  12          unsigned char done=0;
+  13          unsigned char kuai=0;
+  14          unsigned char temperature_start_flag;
+  15          //值
+  16          float voltage,temperature;
+  17          unsigned int freq,frequency;
+  18          //记录值
+  19          unsigned char voltage_record;
+  20          unsigned int temperature_record,frequency_record;
+  21          //标准值
+  22          float voltage_standard=2;
+  23          
+  24          void temperature_start();
+  25          void read_value();
+  26          
+  27          void main()
+  28          {
+  29   1          close_buzz();
+  30   1          close_led();
+  31   1          read_value();
+  32   1          pcf8591_init();
+  33   1          Timer0Init();
+  34   1          Timer1Init();
+  35   1          EA=1;
+  36   1          while(1)
+  37   1          {
+  38   2              fen();
+  39   2              temperature_start();
+  40   2              led_pan();
+  41   2          }
+  42   1      }
+  43          
+  44          void timer0_proc() interrupt 1
+  45          {
+  46   1         freq++;
+  47   1      }
+  48          
+  49          void timer1_proc() interrupt 3
+  50          {
+  51   1          static unsigned char a,ad,blink;
+  52   1          static unsigned int fre,chang,zeng;
+  53   1          display();
+  54   1          if(++a==10)
+C51 COMPILER V9.60.0.0   KETAN                                                             06/05/2023 19:34:44 PAGE 2   
+
+  55   1          {
+  56   2              a=0;
+  57   2              old_key_value=key_value;
+  58   2              key_value=read_keyboard();
+  59   2              if(old_key_value<key_value){key_proc();done=1;}
+  60   2              if(old_key_value>key_value){done=0;kuai=0;}
+  61   2              led();
+  62   2          }
+  63   1          if(++ad==50)
+  64   1          {
+  65   2              ad=0;
+  66   2              voltage=pcf8591_adc()*0.0196;
+  67   2          }
+  68   1          if(++fre==500)
+  69   1          {
+  70   2              fre=0;
+  71   2              frequency=freq*2;
+  72   2              freq=0;
+  73   2              temperature_start_flag=1;
+  74   2          }
+  75   1          if(key_value!=0)
+  76   1          {
+  77   2              chang++;
+  78   2              if(chang==800&done==1)
+  79   2              {
+  80   3                  chang=0;
+  81   3                  key_proc_long();
+  82   3                  kuai=1;
+  83   3              }
+  84   2          }
+  85   1          if(kuai==1)
+  86   1          {
+  87   2              if(++zeng==200)
+  88   2              {
+  89   3                  zeng=0;
+  90   3                  key_proc_long();
+  91   3              }
+  92   2          }
+  93   1          if(led4==1)
+  94   1          {
+  95   2              blink++;
+  96   2              if(blink==200)
+  97   2              {
+  98   3                  blink=0;
+  99   3                  aux4=~aux4;
+ 100   3              }
+ 101   2          }
+ 102   1          else{aux4=0;blink=0;}
+ 103   1      }
+ 104          
+ 105          void temperature_start()
+ 106          {
+ 107   1          if(temperature_start_flag==1)
+ 108   1          {
+ 109   2              temperature_start_flag=0;
+ 110   2              temperature=read_temperature();
+ 111   2          }
+ 112   1      }
+ 113          
+ 114          void read_value()
+ 115          {
+ 116   1          unsigned char high,low;
+C51 COMPILER V9.60.0.0   KETAN                                                             06/05/2023 19:34:44 PAGE 3   
+
+ 117   1          voltage_record=eeprom_read(0x00);Delay5ms();
+ 118   1          high=0;low=0;
+ 119   1          high=eeprom_read(0x01);Delay5ms();
+ 120   1          low=eeprom_read(0x02);Delay5ms();
+ 121   1          frequency_record=high*256+low;
+ 122   1          high=0;low=0;
+ 123   1          high=eeprom_read(0x03);Delay5ms();
+ 124   1          low=eeprom_read(0x04);Delay5ms();
+ 125   1          temperature_record=high*256+low;
+ 126   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    450    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     33       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

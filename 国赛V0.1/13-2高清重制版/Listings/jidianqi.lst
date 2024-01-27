@@ -1,0 +1,38 @@
+C51 COMPILER V9.60.0.0   JIDIANQI                                                          06/09/2023 11:00:27 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE JIDIANQI
+OBJECT MODULE PLACED IN .\Objects\jidianqi.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE jidianqi.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+                    - PRINT(.\Listings\jidianqi.lst) TABS(2) OBJECT(.\Objects\jidianqi.obj)
+
+line level    source
+
+   1          #include "jidianqi.h"
+   2          
+   3          extern unsigned char distance_can,distance;
+   4          
+   5          void jidianqi_go()
+   6          { 
+   7   1          unsigned char c;
+   8   1          if(distance>distance_can){c|=0x10;}else{c&=0xef;}
+   9   1          c&=0xbf;
+  10   1          
+  11   1          P0=c;
+  12   1          P2=(P2&0x1f)|0xa0;
+  13   1          P2&=0x1f;
+  14   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     32    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

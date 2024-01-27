@@ -1,0 +1,1 @@
+"Ultrasonic.c" OPTIMIZE (8,SPEED) BROWSE INCDIR(..\8-1) DEBUG OBJECTEXTEND PRINT(.\Listings\Ultrasonic.lst) TABS (2) OBJECT(.\Objects\Ultrasonic.obj)

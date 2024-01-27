@@ -1,0 +1,140 @@
+C51 COMPILER V9.60.0.0   LIBRARY                                                           03/13/2023 18:12:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LIBRARY
+OBJECT MODULE PLACED IN .\Objects\library.obj
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE library.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND 
+                    -PRINT(.\Listings\library.lst) TABS(2) OBJECT(.\Objects\library.obj)
+
+line level    source
+
+   1          #include "STC15F2K60S2.H"
+   2          
+   3          unsigned char a=0;
+   4          unsigned char key_value=0x10;
+   5          
+   6          void keyboard_scan();
+   7          
+   8          void close_buzz()
+   9          {
+  10   1          P0=0x00;
+  11   1          P2=(P2&0x1f)|0xa0;
+  12   1          P2&=0x1f;
+  13   1      }
+  14          
+  15          void close_led()
+  16          {
+  17   1          P0=0xff;
+  18   1          P2=(P2&0x1f)|0x80;
+  19   1          P2&=0x1f;
+  20   1      }
+  21          
+  22          void timer_0_init()
+  23          {
+  24   1          AUXR&=0X7F;  //12T
+  25   1          //AUXR|=0X80;  //1T,因无法准确定时而弃用
+  26   1          TMOD&=0xF0;
+  27   1          TH0=(65536-1000)/256;
+  28   1          TL0=(65535-1000)%256;
+  29   1          TF0=0;
+  30   1          TR0=1;
+  31   1          ET0=1;
+  32   1      }
+  33          
+  34          void main()
+  35          {
+  36   1          close_buzz();
+  37   1          close_led();
+  38   1          timer_0_init();
+  39   1          EA=1;
+  40   1          while(1)
+  41   1          {
+  42   2              
+  43   2          }
+  44   1      }
+  45          
+  46          void timer_0() interrupt 1
+  47          {
+  48   1          static unsigned int i;
+  49   1          if(++i==1000)
+  50   1          {
+  51   2              i=0;
+  52   2              a=~a;
+  53   2              if(a!=0)
+  54   2              {
+C51 COMPILER V9.60.0.0   LIBRARY                                                           03/13/2023 18:12:53 PAGE 2   
+
+  55   3                  P0=0x00;
+  56   3                  P2=(P2&0x1f)|0x80;
+  57   3                  P2&=0x1f;
+  58   3              }
+  59   2              else
+  60   2              {
+  61   3                  P0=0xff;
+  62   3                  P2=(P2&0x1f)|0x80;
+  63   3                  P2&=0x1f;
+  64   3              }
+  65   2          } 
+  66   1      }
+  67          
+  68          void keyboard_scan()
+  69          {
+  70   1          static unsigned char key_state;
+  71   1          static unsigned char hang;
+  72   1          static unsigned char lie;
+  73   1          switch(key_state)
+  74   1          {
+  75   2              case 0:
+  76   2              {
+  77   3                  P3=0x0f;P42=0;P44=0;
+  78   3                  if(key_state!=0x0f){key_state=1;}
+  79   3              }break;
+  80   2              case 1:
+  81   2              {
+  82   3                  P3=0x0f;P42=0;P44=0;
+  83   3                  if(key_state!=0x0f)
+  84   3                  {
+  85   4                      if(P30==0){hang=1;}
+  86   4                      if(P31==0){hang=5;}
+  87   4                      if(P32==0){hang=9;}
+  88   4                      if(P33==0){hang=13;}
+  89   4                      P3=0xf0;P42=1;P44=1;
+  90   4                      if(P34==0){lie=3;}
+  91   4                      if(P35==0){lie=2;}
+  92   4                      if(P42==0){lie=1;}
+  93   4                      if(P44==0){lie=0;}
+  94   4                      key_value=hang+lie;
+  95   4                      key_state=2;
+  96   4                  }
+  97   3                  else
+  98   3                  {
+  99   4                      key_state=0;
+ 100   4                  }
+ 101   3              }break;
+ 102   2              case 2:
+ 103   2              {
+ 104   3                  P3=0x0f;P42=0;P44=0;
+ 105   3                  if(P3==0x0f)
+ 106   3                  {
+ 107   4                      key_state=0;
+ 108   4                      key_value=0x10;
+ 109   4                  }
+ 110   3              }break;
+ 111   2          }
+ 112   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    246    ----
+C51 COMPILER V9.60.0.0   LIBRARY                                                           03/13/2023 18:12:53 PAGE 3   
+
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

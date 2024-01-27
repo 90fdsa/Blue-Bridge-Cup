@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\babiq.obj",
+".\Objects\i2c.obj" 
+TO ".\Objects\hotpot" 
+PRINT(".\Listings\hotpot.m51") RAMSIZE(256) 
