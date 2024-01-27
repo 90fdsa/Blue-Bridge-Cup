@@ -1,0 +1,232 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        06/24/2019  14:48:52  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE ex8.obj TO KEY_3 RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  ex8.obj (EX8)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  KEY_3 (EX8)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     000CH     UNIT         ?DT?EX8
+            DATA    0014H     0002H     UNIT         _DATA_GROUP_
+                    0016H     000AH                  *** GAP ***
+            BIT     0020H.0   0000H.2   UNIT         ?BI?EX8
+                    0020H.2   0000H.6                *** GAP ***
+            IDATA   0021H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0007H     UNIT         ?PR?CLS_LED?EX8
+                    000AH     0001H                  *** GAP ***
+            CODE    000BH     0003H     ABSOLUTE     
+            CODE    000EH     008CH     UNIT         ?C_C51STARTUP
+            CODE    009AH     0072H     UNIT         ?PR?MAIN?EX8
+            CODE    010CH     004AH     UNIT         ?PR?READ_KEY?EX8
+            CODE    0156H     0047H     UNIT         ?PR?ISR_TIMER_0?EX8
+            CODE    019DH     0030H     UNIT         ?PR?DISPLAY?EX8
+            CODE    01CDH     000EH     UNIT         ?C_INITSEG
+            CODE    01DBH     000BH     UNIT         ?CO?EX8
+            CODE    01E6H     0006H     UNIT         ?PR?CLS_BUZZ?EX8
+
+
+
+OVERLAY MAP OF MODULE:   KEY_3 (EX8)
+
+
+SEGMENT                          DATA_GROUP 
+  +--> CALLED SEGMENT          START    LENGTH
+----------------------------------------------
+?PR?ISR_TIMER_0?EX8            -----    -----
+  +--> ?PR?DISPLAY?EX8
+
+?PR?DISPLAY?EX8                -----    -----
+  +--> ?CO?EX8
+
+*** NEW ROOT ***************************************************
+
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  14:48:52  PAGE 2
+
+
+?C_C51STARTUP                  -----    -----
+  +--> ?PR?MAIN?EX8
+  +--> ?C_INITSEG
+
+?PR?MAIN?EX8                   0014H    0002H
+  +--> ?PR?CLS_BUZZ?EX8
+  +--> ?PR?CLS_LED?EX8
+  +--> ?PR?READ_KEY?EX8
+
+
+
+SYMBOL TABLE OF MODULE:  KEY_3 (EX8)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        EX8
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0090H         PUBLIC        P1
+  B:0020H.0       PUBLIC        key_re
+  D:00B0H         PUBLIC        P3
+  B:00A8H.7       PUBLIC        EA
+  D:0008H         PUBLIC        dspbuf
+  D:0010H         PUBLIC        dspcom
+  D:00A8H         PUBLIC        IE
+  D:00B8H         PUBLIC        IP
+  C:009AH         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  C:01DBH         PUBLIC        tab
+  D:0011H         PUBLIC        intr
+  D:008EH         PUBLIC        AUXR
+  B:0020H.1       PUBLIC        key_flag
+  C:010CH         PUBLIC        read_key
+  B:00A8H.1       PUBLIC        ET0
+  B:0088H.5       PUBLIC        TF0
+  D:0012H         PUBLIC        key_value
+  D:008CH         PUBLIC        TH0
+  D:008AH         PUBLIC        TL0
+  B:0088H.4       PUBLIC        TR0
+  C:0003H         PUBLIC        cls_led
+  D:0013H         PUBLIC        key_press
+  C:0156H         PUBLIC        isr_timer_0
+  D:00C8H         PUBLIC        T2CON
+  C:01E6H         PUBLIC        cls_buzz
+  C:019DH         PUBLIC        display
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          CLS_BUZZ
+  C:01E6H         LINE#         30
+  C:01E6H         LINE#         31
+  C:01E6H         LINE#         32
+  C:01EBH         LINE#         33
+  -------         ENDPROC       CLS_BUZZ
+  -------         PROC          CLS_LED
+  C:0003H         LINE#         34
+  C:0003H         LINE#         35
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  14:48:52  PAGE 3
+
+
+  C:0003H         LINE#         36
+  C:0009H         LINE#         37
+  -------         ENDPROC       CLS_LED
+  -------         PROC          MAIN
+  -------         DO            
+  D:0014H         SYMBOL        key_temp
+  D:0015H         SYMBOL        num
+  -------         ENDDO         
+  C:009AH         LINE#         40
+  C:009AH         LINE#         41
+  C:009AH         LINE#         45
+  C:00A0H         LINE#         47
+  C:00A3H         LINE#         49
+  C:00A6H         LINE#         51
+  C:00A9H         LINE#         52
+  C:00ACH         LINE#         53
+  C:00AFH         LINE#         54
+  C:00B1H         LINE#         55
+  C:00B3H         LINE#         56
+  C:00B5H         LINE#         57
+  C:00B7H         LINE#         59
+  C:00B7H         LINE#         60
+  C:00B7H         LINE#         61
+  C:00BAH         LINE#         62
+  C:00BAH         LINE#         63
+  C:00BCH         LINE#         64
+  C:00C1H         LINE#         65
+  C:00C1H         LINE#         67
+  C:00CAH         LINE#         68
+  C:00CAH         LINE#         69
+  C:00CAH         LINE#         70
+  C:00CCH         LINE#         71
+  C:00CEH         LINE#         72
+  C:00CEH         LINE#         73
+  C:00D0H         LINE#         74
+  C:00D0H         LINE#         75
+  C:00D0H         LINE#         76
+  C:00D3H         LINE#         78
+  C:00E7H         LINE#         79
+  C:0101H         LINE#         80
+  C:010AH         LINE#         81
+  -------         ENDPROC       MAIN
+  -------         PROC          ISR_TIMER_0
+  C:0156H         LINE#         85
+  C:0173H         LINE#         87
+  C:0176H         LINE#         88
+  C:017DH         LINE#         89
+  C:017DH         LINE#         90
+  C:0180H         LINE#         91
+  C:0182H         LINE#         92
+  C:0182H         LINE#         93
+  -------         ENDPROC       ISR_TIMER_0
+  -------         PROC          READ_KEY
+  -------         DO            
+  D:0007H         SYMBOL        key_temp
+  -------         ENDDO         
+  C:010CH         LINE#         96
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  14:48:52  PAGE 4
+
+
+  C:010CH         LINE#         97
+  C:010CH         LINE#         101
+  C:0111H         LINE#         103
+  C:0115H         LINE#         104
+  C:0119H         LINE#         106
+  C:011CH         LINE#         108
+  C:0121H         LINE#         109
+  C:0121H         LINE#         110
+  C:0124H         LINE#         111
+  C:0126H         LINE#         112
+  C:0136H         LINE#         113
+  C:0136H         LINE#         114
+  C:0136H         LINE#         115
+  C:0139H         LINE#         116
+  C:013BH         LINE#         117
+  C:013BH         LINE#         118
+  C:013EH         LINE#         119
+  C:0140H         LINE#         120
+  C:0140H         LINE#         121
+  C:0143H         LINE#         122
+  C:0145H         LINE#         123
+  C:0145H         LINE#         124
+  C:0148H         LINE#         125
+  C:0148H         LINE#         126
+  C:0148H         LINE#         127
+  C:0148H         LINE#         129
+  C:014EH         LINE#         130
+  C:014EH         LINE#         131
+  C:0150H         LINE#         132
+  C:0153H         LINE#         133
+  C:0153H         LINE#         135
+  C:0155H         LINE#         136
+  -------         ENDPROC       READ_KEY
+  -------         PROC          DISPLAY
+  C:019DH         LINE#         139
+  C:019DH         LINE#         140
+  C:019DH         LINE#         141
+  C:01A3H         LINE#         143
+  C:01B4H         LINE#         144
+  C:01C2H         LINE#         146
+  C:01C9H         LINE#         147
+  C:01CCH         LINE#         148
+  C:01CCH         LINE#         149
+  -------         ENDPROC       DISPLAY
+  -------         ENDMOD        EX8
+
+Program Size: data=23.2 xdata=0 code=491
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

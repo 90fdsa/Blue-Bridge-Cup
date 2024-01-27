@@ -1,0 +1,4 @@
+"ex14.obj",
+"onewire.obj" 
+TO "DS18B20_2" 
+RAMSIZE(256) 

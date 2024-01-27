@@ -1,0 +1,135 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        06/24/2019  15:35:52  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE ex17.obj TO INT RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  ex17.obj (EX17)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+
+
+LINK MAP OF MODULE:  INT (EX17)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            IDATA   0008H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0003H     ABSOLUTE     
+            CODE    0006H     000CH     UNIT         ?C_C51STARTUP
+                    0012H     0001H                  *** GAP ***
+            CODE    0013H     0003H     ABSOLUTE     
+            CODE    0016H     0012H     UNIT         ?PR?MAIN?EX17
+            CODE    0028H     0012H     UNIT         ?PR?ISR_INTR_0?EX17
+            CODE    003AH     0012H     UNIT         ?PR?ISR_INTR_1?EX17
+            CODE    004CH     000FH     UNIT         ?PR?CLS_BUZZ?EX17
+            CODE    005BH     000FH     UNIT         ?PR?CLS_LED?EX17
+
+
+
+OVERLAY MAP OF MODULE:   INT (EX17)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?EX17
+
+?PR?MAIN?EX17
+  +--> ?PR?CLS_BUZZ?EX17
+  +--> ?PR?CLS_LED?EX17
+
+
+
+SYMBOL TABLE OF MODULE:  INT (EX17)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        EX17
+  C:0000H         SYMBOL        _ICE_DUMMY_
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  15:35:52  PAGE 2
+
+
+  C:0028H         PUBLIC        isr_intr_0
+  D:0080H         PUBLIC        P0
+  C:003AH         PUBLIC        isr_intr_1
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  B:00A8H.7       PUBLIC        EA
+  B:0080H.0       PUBLIC        LED1
+  B:0080H.1       PUBLIC        LED2
+  D:00A8H         PUBLIC        IE
+  D:00B8H         PUBLIC        IP
+  C:0016H         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+  D:0088H         PUBLIC        TCON
+  B:00A8H.0       PUBLIC        EX0
+  B:0088H.0       PUBLIC        IT0
+  B:00A8H.2       PUBLIC        EX1
+  B:0088H.2       PUBLIC        IT1
+  C:005BH         PUBLIC        cls_led
+  D:00C8H         PUBLIC        T2CON
+  C:004CH         PUBLIC        cls_buzz
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          CLS_BUZZ
+  C:004CH         LINE#         19
+  C:004CH         LINE#         20
+  C:004CH         LINE#         21
+  C:0054H         LINE#         22
+  C:0057H         LINE#         23
+  C:005AH         LINE#         24
+  -------         ENDPROC       CLS_BUZZ
+  -------         PROC          CLS_LED
+  C:005BH         LINE#         25
+  C:005BH         LINE#         26
+  C:005BH         LINE#         27
+  C:0063H         LINE#         28
+  C:0066H         LINE#         29
+  C:0069H         LINE#         30
+  -------         ENDPROC       CLS_LED
+  -------         PROC          MAIN
+  C:0016H         LINE#         32
+  C:0016H         LINE#         33
+  C:0016H         LINE#         34
+  C:0019H         LINE#         35
+  C:001CH         LINE#         36
+  C:001EH         LINE#         37
+  C:0020H         LINE#         39
+  C:0022H         LINE#         40
+  C:0024H         LINE#         42
+  C:0026H         LINE#         43
+  -------         ENDPROC       MAIN
+  -------         PROC          ISR_INTR_0
+  C:0028H         LINE#         47
+  C:002AH         LINE#         50
+  C:0032H         LINE#         51
+  C:0034H         LINE#         52
+  C:0037H         LINE#         53
+  -------         ENDPROC       ISR_INTR_0
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  15:35:52  PAGE 3
+
+
+  -------         PROC          ISR_INTR_1
+  C:003AH         LINE#         56
+  C:003CH         LINE#         58
+  C:0044H         LINE#         59
+  C:0046H         LINE#         60
+  C:0049H         LINE#         61
+  -------         ENDPROC       ISR_INTR_1
+  -------         ENDMOD        EX17
+
+Program Size: data=9.0 xdata=0 code=105
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

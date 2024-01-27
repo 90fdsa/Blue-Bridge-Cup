@@ -1,0 +1,203 @@
+C51 COMPILER V9.60.0.0   EX11                                                              02/03/2023 15:45:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EX11
+OBJECT MODULE PLACED IN ex11.OBJ
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ex11.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TAB
+                    -S(2)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：DAC转换实验
+   3          * 实验目的：1.掌握I2C总线通讯基本特点和工作时序
+   4          *           2.掌握51单片机模拟I2C总线时序的程序设计方法
+   5          *           3.掌握PCF8591 ADC的操作方法
+   6          * 实验配置：J3跳线配置为MM方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：按S7、S6按键，实现转换值变化，其中前面四位数码管显
+   8                      示数模转换的数字值，后四位显示模拟电压值，单位uV
+   9          * 硬件环境：IAP15F2K61S2@11.0592MHz
+  10          * 注意事项：用万用表测量J3排针上面的D\A引脚，测量电压与显示电压值进行对比，
+  11                      分析误差原因
+  12          * 日期版本：2019-6-24/V2.0
+  13          *******************************************************************************/
+  14          
+  15          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  16          #include "i2c.h"    //I2C总线驱动库
+  17          #include "absacc.h"
+  18          
+  19          #define VREF  4850  //PCF8591参考电压
+  20          
+  21          sfr AUXR = 0x8E; 
+  22                         //0,1,2,3,4,5,6,7,8,9,熄灭
+  23          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,
+  24                                       0xff
+  25                                     };
+  26          unsigned char dspbuf[8] = {10,10,10,10,0,0,0,0};  //显示缓冲区
+  27          unsigned char dspcom = 0;
+  28          bit key_re;
+  29          unsigned char key_press;
+  30          unsigned char key_value;
+  31          
+  32          bit key_flag;
+  33          unsigned char intr;
+  34          
+  35          void display(void);
+  36          unsigned char read_key(void);
+  37          
+  38          void cls_buzz()
+  39          {
+  40   1        XBYTE[0xA000] = 0;
+  41   1      }
+  42          void cls_led()
+  43          {
+  44   1        XBYTE[0x8000] = 0xFF;
+  45   1      }
+  46          
+  47          
+  48          //主函数
+  49          void main(void)
+  50          { 
+  51   1          unsigned char key_temp;
+  52   1        unsigned char dac_value;  //DAC转换数据
+  53   1        unsigned int Vaout;  //输出电压
+  54   1        
+C51 COMPILER V9.60.0.0   EX11                                                              02/03/2023 15:45:53 PAGE 2   
+
+  55   1        cls_buzz();cls_led();
+  56   1          init_pcf8591();
+  57   1        AUXR |= 0x80;
+  58   1        TMOD &= 0xF0;
+  59   1        TL0 = 0xCD; 
+  60   1        TH0 = 0xD4; 
+  61   1        TF0 = 0;  
+  62   1        TR0 = 1;
+  63   1        ET0 = 1;
+  64   1        EA = 1;
+  65   1        
+  66   1          while(1)
+  67   1          {
+  68   2              if(key_flag)
+  69   2              {
+  70   3                  key_flag = 0;
+  71   3                  key_temp = read_key();
+  72   3              }        
+  73   2              //进入按键处理程序部分
+  74   2              switch(key_temp)
+  75   2              {
+  76   3                  case 1:
+  77   3            {
+  78   4              dac_value=dac_value+5;
+  79   4              if(dac_value>255)dac_value=255;
+  80   4              dac_pcf8591(dac_value);   
+  81   4            }           
+  82   3                      break;
+  83   3                  case 2:
+  84   3            {
+  85   4                      dac_value=dac_value-5;
+  86   4              if(dac_value<0)dac_value=0;
+  87   4              dac_pcf8591(dac_value);   
+  88   4            }
+  89   3                      break;      
+  90   3              }
+  91   2          key_temp = 0;  //完成按键处理程序后，清除键值
+  92   2          
+  93   2          Vaout = VREF/255*dac_value;
+  94   2          
+  95   2          dspbuf[0] = 10;
+  96   2          (Vaout>=100)?(dspbuf[1] = dac_value/100):(dspbuf[1] = 10);    
+  97   2          (Vaout>=10)?(dspbuf[2] = dac_value%100/10):(dspbuf[2] = 10);      
+  98   2          dspbuf[3] = dac_value%10; 
+  99   2              
+ 100   2          //显示数据更新
+ 101   2          (Vaout>=1000)?(dspbuf[4] = Vaout/1000):(dspbuf[4] = 10);  
+ 102   2          (Vaout>=100)?(dspbuf[5] = Vaout%1000/100):(dspbuf[5] = 10);    
+ 103   2          (Vaout>=10)?(dspbuf[6] = Vaout%100/10):(dspbuf[6] = 10);      
+ 104   2          dspbuf[7] = Vaout%10; 
+ 105   2          }
+ 106   1      }
+ 107          
+ 108          //定时器中断服务函数
+ 109          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+ 110          {
+ 111   1          display();
+ 112   1        if(++intr == 10)  //1ms执行一次
+ 113   1        {
+ 114   2              intr = 0;
+ 115   2          key_flag = 1;  //10ms按键扫描标志位置1
+ 116   2          }
+C51 COMPILER V9.60.0.0   EX11                                                              02/03/2023 15:45:53 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          //显示函数
+ 120          void display(void)
+ 121          {   
+ 122   1        XBYTE[0xE000] = 0xff;  //消隐
+ 123   1        
+ 124   1        XBYTE[0xC000] = (1<<dspcom);
+ 125   1          XBYTE[0xE000] = tab[dspbuf[dspcom]]; //段码
+ 126   1         
+ 127   1          if(++dspcom == 8){
+ 128   2              dspcom = 0;
+ 129   2          }   
+ 130   1      }
+ 131          
+ 132          //读取键值
+ 133          unsigned char read_key(void)
+ 134          {
+ 135   1        
+ 136   1          unsigned char key_temp;
+ 137   1          
+ 138   1        key_temp = (P3&0x0f);
+ 139   1        
+ 140   1          if(key_temp != 0x0f) //有按键按下
+ 141   1              key_press++;
+ 142   1        else
+ 143   1          key_press = 0;  //抖动
+ 144   1          
+ 145   1          if(key_press == 5)
+ 146   1          {
+ 147   2          key_press = 0;
+ 148   2          key_re = 1;
+ 149   2          switch(key_temp)
+ 150   2              {
+ 151   3                  case 0x0e:
+ 152   3                      key_value = 1;  //S1
+ 153   3                      break;                
+ 154   3                  case 0x0d:
+ 155   3                      key_value = 2;  //S5
+ 156   3                      break;    
+ 157   3                  case 0x0b:
+ 158   3                      key_value = 3;  //S9
+ 159   3                      break;    
+ 160   3                  case 0x07:
+ 161   3                      key_value = 4;  //S13
+ 162   3                      break;
+ 163   3              }
+ 164   2          }
+ 165   1          //连续三次检测到按键被按下，并且该按键已经释放
+ 166   1          if((key_re == 1) && (key_temp == 0x0f))
+ 167   1          {
+ 168   2              key_re = 0;
+ 169   2              return key_value;
+ 170   2          }
+ 171   1          
+ 172   1          return 0xff;  //无按键按下或被按下的按键未被释放    
+ 173   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    504    ----
+   CONSTANT SIZE    =     11    ----
+C51 COMPILER V9.60.0.0   EX11                                                              02/03/2023 15:45:53 PAGE 4   
+
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,187 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    03/16/2023  16:50:11  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+D:\STUDY\DANPIANJIXILIE\KEIL\C51\BIN\BL51.EXE ex13.obj TO UART RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  ex13.obj (EX13)
+  D:\STUDY\DANPIANJIXILIE\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  D:\STUDY\DANPIANJIXILIE\KEIL\C51\LIB\C51S.LIB (?C?CLDPTR)
+  D:\STUDY\DANPIANJIXILIE\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  UART (EX13)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0007H     UNIT         ?DT?EX13
+            IDATA   000FH     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     008CH     UNIT         ?C_C51STARTUP
+            CODE    008FH     003FH     UNIT         ?PR?MAIN?EX13
+            CODE    00CEH     0020H     UNIT         ?CO?EX13
+            CODE    00EEH     001CH     UNIT         ?PR?_UART_SENDSTRING?EX13
+            CODE    010AH     0019H     UNIT         ?C?LIB_CODE
+            CODE    0123H     000FH     UNIT         ?PR?DELAY?EX13
+            CODE    0132H     000FH     UNIT         ?PR?CLS_BUZZ?EX13
+            CODE    0141H     000EH     UNIT         ?C_INITSEG
+
+
+
+OVERLAY MAP OF MODULE:   UART (EX13)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?EX13
+  +--> ?C_INITSEG
+
+?PR?MAIN?EX13
+  +--> ?PR?CLS_BUZZ?EX13
+  +--> ?PR?_UART_SENDSTRING?EX13
+  +--> ?PR?DELAY?EX13
+
+?PR?_UART_SENDSTRING?EX13
+  +--> ?CO?EX13
+
+?C_INITSEG
+  +--> ?CO?EX13
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/16/2023  16:50:11  PAGE 2
+
+
+
+
+
+SYMBOL TABLE OF MODULE:  UART (EX13)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        EX13
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  D:00C0H         PUBLIC        P4
+  D:00C8H         PUBLIC        P5
+  D:00E8H         PUBLIC        P6
+  D:00F8H         PUBLIC        P7
+  D:0008H         PUBLIC        number
+  D:00A8H         PUBLIC        IE
+  C:0123H         PUBLIC        delay
+  D:00B8H         PUBLIC        IP
+  D:000BH         PUBLIC        string
+  B:0098H.1       PUBLIC        TI
+  D:00D8H         PUBLIC        CCON
+  C:008FH         PUBLIC        main
+  D:0099H         PUBLIC        SBUF
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  D:008EH         PUBLIC        AUXR
+  D:008DH         PUBLIC        TH1
+  D:008BH         PUBLIC        TL1
+  B:0088H.6       PUBLIC        TR1
+  C:00F4H         PUBLIC        _uart_sendstring
+  D:000EH         PUBLIC        i
+  C:0132H         PUBLIC        cls_buzz
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          MAIN
+  C:008FH         LINE#         33
+  C:008FH         LINE#         34
+  C:008FH         LINE#         35
+  C:0092H         LINE#         36
+  C:0095H         LINE#         37
+  C:0098H         LINE#         38
+  C:009BH         LINE#         39
+  C:009EH         LINE#         40
+  C:00A1H         LINE#         41
+  C:00A3H         LINE#         42
+  C:00A3H         LINE#         43
+  C:00A6H         LINE#         44
+  C:00AFH         LINE#         45
+  C:00B2H         LINE#         46
+  C:00BBH         LINE#         47
+  C:00BEH         LINE#         48
+  C:00C0H         LINE#         49
+  C:00C6H         LINE#         50
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/16/2023  16:50:11  PAGE 3
+
+
+  C:00C9H         LINE#         51
+  C:00CCH         LINE#         52
+  -------         ENDPROC       MAIN
+  -------         PROC          DELAY
+  -------         DO            
+  D:0007H         SYMBOL        i
+  D:0006H         SYMBOL        j
+  D:0005H         SYMBOL        k
+  -------         ENDDO         
+  C:0123H         LINE#         55
+  C:0123H         LINE#         56
+  C:0123H         LINE#         59
+  C:0124H         LINE#         60
+  C:0125H         LINE#         61
+  C:0127H         LINE#         62
+  C:0129H         LINE#         63
+  C:012BH         LINE#         65
+  C:012BH         LINE#         67
+  C:012BH         LINE#         68
+  C:012DH         LINE#         69
+  C:012FH         LINE#         70
+  C:0131H         LINE#         71
+  -------         ENDPROC       DELAY
+  -------         PROC          CLS_BUZZ
+  C:0132H         LINE#         73
+  C:0132H         LINE#         74
+  C:0132H         LINE#         75
+  C:013AH         LINE#         76
+  C:013DH         LINE#         77
+  C:0140H         LINE#         78
+  -------         ENDPROC       CLS_BUZZ
+  C:00EEH         SYMBOL        L?0021
+  -------         PROC          L?0020
+  -------         ENDPROC       L?0020
+  C:00EEH         SYMBOL        L?0021
+  -------         PROC          _UART_SENDSTRING
+  D:0001H         SYMBOL        str
+  -------         DO            
+  D:0001H         SYMBOL        p
+  -------         ENDDO         
+  C:00F4H         LINE#         81
+  C:00F4H         LINE#         82
+  C:00F4H         LINE#         84
+  C:00F4H         LINE#         85
+  C:00F9H         LINE#         86
+  C:00F9H         LINE#         87
+  C:00FBH         LINE#         88
+  C:00FEH         LINE#         89
+  C:0100H         LINE#         90
+  C:0107H         LINE#         91
+  C:0109H         LINE#         92
+  -------         ENDPROC       _UART_SENDSTRING
+  -------         ENDMOD        EX13
+
+  -------         MODULE        ?C?CLDPTR
+  C:010AH         PUBLIC        ?C?CLDPTR
+  -------         ENDMOD        ?C?CLDPTR
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/16/2023  16:50:11  PAGE 4
+
+
+
+Program Size: data=16.0 xdata=0 code=335
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

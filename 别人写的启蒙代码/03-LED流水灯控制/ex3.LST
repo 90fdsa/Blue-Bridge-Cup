@@ -1,0 +1,86 @@
+C51 COMPILER V9.60.0.0   EX3                                                               01/03/2023 14:48:32 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EX3
+OBJECT MODULE PLACED IN ex3.OBJ
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ex3.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS
+                    -(2)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：LED流水灯实验
+   3          * 实验目的：1.掌握单片机IO口操作的基本方法
+   4          *           2.掌握移位运算符的使用方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：LED以0.2S为间隔流水操作
+   7          * 硬件环境：IAP15F2K61S2单片机，单片机内部振荡器频率：11.0592M
+   8          * 注意事项：要用到_nop_()必须要包含intrins.h头文件
+   9          * 日期版本：2019-6-24/V2.0
+  10          *******************************************************************************/
+  11          
+  12          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  13          #include "intrins.h"
+  14          
+  15          //关闭外设
+  16          void cls_buzz(void)
+  17          {
+  18   1        P2 = (P2&0x1F|0xA0);
+  19   1        P0 = 0x00;
+  20   1        P2 &= 0x1F;
+  21   1      }
+  22          
+  23          //延时函数
+  24          void delay(void)
+  25          {
+  26   1        unsigned char i, j, k;
+  27   1      
+  28   1        _nop_();
+  29   1        _nop_();
+  30   1        i = 9;
+  31   1        j = 104;
+  32   1        k = 139;
+  33   1        do
+  34   1        {
+  35   2          do
+  36   2          {
+  37   3            while (--k);
+  38   3          } while (--j);
+  39   2        } while (--i);
+  40   1      }
+  41          
+  42          //主函数
+  43          void main(void)
+  44          {
+  45   1          unsigned char i;
+  46   1        
+  47   1        cls_buzz();
+  48   1          
+  49   1          while(1)
+  50   1          {
+  51   2          for(i=0; i<8; i++)
+  52   2          {
+  53   3            P2 = ((P2&0x1f)|0x80);
+  54   3            P0 = ~(0x01<<i);  //左移i位，按位取反
+C51 COMPILER V9.60.0.0   EX3                                                               01/03/2023 14:48:32 PAGE 2   
+
+  55   3            P2 &= 0x1f;
+  56   3            delay();
+  57   3          }
+  58   2          }
+  59   1      }
+  60          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     76    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

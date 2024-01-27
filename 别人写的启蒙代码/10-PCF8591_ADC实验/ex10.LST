@@ -1,0 +1,118 @@
+C51 COMPILER V9.06   EX10                                                                  06/24/2019 14:58:21 PAGE 1   
+
+
+C51 COMPILER V9.06, COMPILATION OF MODULE EX10
+OBJECT MODULE PLACED IN ex10.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ex10.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：ADC转换实验
+   3          * 实验目的：1.掌握I2C总线通讯基本特点和工作时序
+   4          *           2.掌握51单片机模拟I2C总线时序的程序设计方法
+   5          *           3.掌握PCF8591 ADC芯片的操作方法
+   6          * 实验配置：J3跳线配置为MM方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：旋转Rb2电位器，数码管显示数字在0~255之间进行变化
+   8          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   9          * 注意事项：使用程序前在 Preprocessor Symbols 中增加宏定义ADC_PCF8591
+  10          * 日期版本：2019-6-24/V2.0
+  11          *******************************************************************************/
+  12          
+  13          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  14          #include "i2c.h"    //I2C总线驱动库 
+  15          #include "absacc.h"
+  16          
+  17          sfr AUXR = 0x8E;        //IAP15F2K61S2单片机特殊功能寄存器
+  18          
+  19          code unsigned char tab[] = { 0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,
+  20                                       0xff
+  21                                     };
+  22          unsigned char dspbuf[8] = {10,10,10,10,10,10,10,10};  //显示缓冲区
+  23          unsigned char dspcom = 0;
+  24          unsigned char intr;
+  25          bit adc_flag;
+  26          
+  27          void display(void);
+  28          
+  29          void cls_buzz()
+  30          {
+  31   1              XBYTE[0xA000] = 0;
+  32   1      }
+  33          void cls_led()
+  34          {
+  35   1              XBYTE[0x8000] = 0xFF;
+  36   1      }
+  37          
+  38          //主函数
+  39          void main(void)
+  40          { 
+  41   1          unsigned char adc_value;  //ADC转换数据 
+  42   1              
+  43   1              cls_buzz();cls_led();
+  44   1              P1 &= 0x7f;
+  45   1                      
+  46   1              AUXR |= 0x80;
+  47   1              TMOD &= 0xF0;
+  48   1              TL0 = 0xCD;     
+  49   1              TH0 = 0xD4;     
+  50   1              TF0 = 0;        
+  51   1              TR0 = 1;
+  52   1              ET0 = 1;
+  53   1              EA = 1;
+  54   1      
+  55   1              init_pcf8591();  //PCF8591初始化      
+C51 COMPILER V9.06   EX10                                                                  06/24/2019 14:58:21 PAGE 2   
+
+  56   1          
+  57   1          while(1)
+  58   1          {
+  59   2                      if(adc_flag)
+  60   2                      {
+  61   3                              adc_flag = 0;  //清除ADC扫描标志位 
+  62   3                              adc_value = adc_pcf8591();
+  63   3                              //更新显示数据
+  64   3                              (adc_value>= 100)?(dspbuf[5] = adc_value/100):(dspbuf[5] = 10);       
+  65   3                              (adc_value>=10)?(dspbuf[6] = adc_value%100/10):(dspbuf[6] = 10);       
+  66   3                              dspbuf[7] = adc_value%10; 
+  67   3                      }
+  68   2          }
+  69   1      }
+  70          
+  71          //定时器中断服务函数
+  72          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  73          {
+  74   1          if(++intr == 50)
+  75   1              {
+  76   2                      intr = 0;
+  77   2                      adc_flag = 1;
+  78   2              } 
+  79   1          display();
+  80   1      }
+  81          
+  82          //显示函数
+  83          void display(void)
+  84          {   
+  85   1              XBYTE[0xE000] = 0xff;  //消隐
+  86   1              
+  87   1              XBYTE[0xC000] = (1<<dspcom);
+  88   1          XBYTE[0xE000] = tab[dspbuf[dspcom]]; //段码
+  89   1         
+  90   1          if(++dspcom == 8){
+  91   2              dspcom = 0;
+  92   2          }   
+  93   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    231    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

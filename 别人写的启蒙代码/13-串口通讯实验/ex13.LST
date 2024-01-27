@@ -1,0 +1,119 @@
+C51 COMPILER V9.60.0.0   EX13                                                              03/16/2023 16:50:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EX13
+OBJECT MODULE PLACED IN ex13.OBJ
+COMPILER INVOKED BY: D:\study\danpianjixilie\keil\C51\BIN\C51.EXE ex13.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TAB
+                    -S(2)
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：串口通讯实验
+   3          * 实验目的：1.掌握51单片机串口工作模式及相关寄存器配置方法
+   4          *           2.了解51单片机波特率的计算方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   6          * 程序现象：板子通过串口将数据发送到电脑
+   7          * 硬件说明：IAP15F2K61S2@11.0592MHz
+   8          * 注意事项：1.通过USB连接线连接PC机，在计算机硬件管理器中查看串口号
+   9          *           2.打开串口调试工具软件，并将串口通讯波特率设定为9600
+  10          * 日期版本：2019-6-24/V2.0
+  11          *******************************************************************************/
+  12          
+  13          #include "STC15F2K60S2.H"  //定义51单片机特殊功能寄存器
+  14          #include "intrins.h"
+  15          
+  16          #define BAUD       9600  //波特率
+  17          #define SYSTEMCLOCK  11059200L  //系统时钟频率
+  18          
+  19          
+  20          unsigned char *number="1145141919810";
+  21          unsigned char *string="HENG HENG HENG";
+  22          unsigned char i=96;
+  23          
+  24          
+  25          //函数声明
+  26          /*******************************************/
+  27          void delay();
+  28          void cls_buzz(void);
+  29          void uart_sendstring(unsigned char *str);
+  30          /*******************************************/
+  31          
+  32          //主函数
+  33          void main(void)
+  34          { 
+  35   1          cls_buzz();
+  36   1          SCON = 0x50;                
+  37   1          AUXR = 0x40; 
+  38   1          TMOD = 0x00;         
+  39   1          TL1 = (65536 - (SYSTEMCLOCK/4/BAUD)); 
+  40   1          TH1 = (65536 - (SYSTEMCLOCK/4/BAUD))>>8;
+  41   1          TR1 = 1;                      
+  42   1          while(1){
+  43   2          uart_sendstring("\r\n");
+  44   2          uart_sendstring(number);
+  45   2          uart_sendstring("\r\n");
+  46   2          uart_sendstring(string);
+  47   2          uart_sendstring("\r\n");
+  48   2          i++;
+  49   2          if(i==123)
+  50   2          i=96;
+  51   2          delay();
+  52   2        }
+  53   1      }
+  54          
+C51 COMPILER V9.60.0.0   EX13                                                              03/16/2023 16:50:11 PAGE 2   
+
+  55          void delay()
+  56          {
+  57   1        unsigned char i, j, k;
+  58   1      
+  59   1        _nop_();
+  60   1        _nop_();
+  61   1        i = 43;
+  62   1        j = 6;
+  63   1        k = 203;
+  64   1        do
+  65   1        {
+  66   2          do
+  67   2          {
+  68   3            while (--k);
+  69   3          } while (--j);
+  70   2        } while (--i);
+  71   1      }
+  72          
+  73          void cls_buzz(void)
+  74          {
+  75   1        P2 = (P2&0x1F|0xA0);
+  76   1        P0 = 0x00;
+  77   1        P2 &= 0x1F;
+  78   1      }
+  79          
+  80          //通过串口发送字符串
+  81          void uart_sendstring(unsigned char *str)
+  82          {
+  83   1          unsigned char *p; 
+  84   1          p = str;
+  85   1          while(*p != '\0')
+  86   1          {
+  87   2              SBUF = *p;
+  88   2              while(TI == 0);  //等待发送标志位置位
+  89   2              TI = 0;
+  90   2              p++;
+  91   2          }
+  92   1      }
+  93          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    121    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

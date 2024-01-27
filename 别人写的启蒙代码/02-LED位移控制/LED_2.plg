@@ -1,0 +1,21 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Administrator\Desktop\CT107D单片机综合实训平台试验例程_IAP15F2K61S2\2.LED位移控制\LED_2.uvproj
+Project File Date:  04/18/2019
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling ex2.c...
+linking...
+Program Size: data=9.0 xdata=0 code=83
+creating hex file from "LED_2"...
+"LED_2" - 0 Error(s), 0 Warning(s).
+Build target 'Target 1'
+compiling ex2.c...
+linking...
+Program Size: data=9.0 xdata=0 code=83
+creating hex file from "LED_2"...
+"LED_2" - 0 Error(s), 0 Warning(s).

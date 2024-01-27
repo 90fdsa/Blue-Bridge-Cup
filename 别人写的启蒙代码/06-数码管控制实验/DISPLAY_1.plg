@@ -1,0 +1,15 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Administrator\Desktop\1.国信长天单片机竞赛平台试验例程\6.数码管控制实验\DISPLAY_1.uvproj
+Project File Date:  04/18/2019
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling ex6.c...
+linking...
+Program Size: data=9.0 xdata=0 code=109
+creating hex file from "DISPLAY_1"...
+"DISPLAY_1" - 0 Error(s), 0 Warning(s).

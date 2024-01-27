@@ -1,0 +1,4 @@
+"ex7.obj",
+"ds1302.obj" 
+TO "DISPLAY_2" 
+RAMSIZE(256) 

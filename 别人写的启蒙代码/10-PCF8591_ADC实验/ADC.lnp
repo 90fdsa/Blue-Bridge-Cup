@@ -1,0 +1,4 @@
+"ex10.obj",
+"i2c.obj" 
+TO "ADC" 
+RAMSIZE(256) 

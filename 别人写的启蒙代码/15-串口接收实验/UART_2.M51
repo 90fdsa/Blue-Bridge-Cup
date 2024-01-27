@@ -1,0 +1,214 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        06/24/2019  15:24:26  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE ex15.obj TO UART_2 RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  ex15.obj (EX15)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  UART_2 (EX15)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0001H     UNIT         ?DT?EX15
+                    0009H     0017H                  *** GAP ***
+            BIT     0020H.0   0000H.1   UNIT         ?BI?EX15
+                    0020H.1   0000H.7                *** GAP ***
+            IDATA   0021H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0019H     UNIT         ?C?LIB_CODE
+            CODE    001CH     0006H     UNIT         ?C_INITSEG
+                    0022H     0001H                  *** GAP ***
+            CODE    0023H     0003H     ABSOLUTE     
+            CODE    0026H     00CAH     UNIT         ?PR?MAIN?EX15
+            CODE    00F0H     008CH     UNIT         ?C_C51STARTUP
+            CODE    017CH     0018H     UNIT         ?CO?EX15
+            CODE    0194H     0016H     UNIT         ?PR?_UART_SENDSTRING?EX15
+            CODE    01AAH     000DH     UNIT         ?PR?ISR_UART?EX15
+
+
+
+OVERLAY MAP OF MODULE:   UART_2 (EX15)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?EX15
+  +--> ?C_INITSEG
+
+?PR?MAIN?EX15
+  +--> ?CO?EX15
+  +--> ?PR?_UART_SENDSTRING?EX15
+
+
+
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  15:24:26  PAGE 2
+
+
+SYMBOL TABLE OF MODULE:  UART_2 (EX15)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        EX15
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  D:00C0H         PUBLIC        P4
+  D:00C8H         PUBLIC        P5
+  B:00A8H.7       PUBLIC        EA
+  D:00E8H         PUBLIC        P6
+  D:00F8H         PUBLIC        P7
+  D:00A8H         PUBLIC        IE
+  B:00A8H.4       PUBLIC        ES
+  D:00B8H         PUBLIC        IP
+  B:0098H.0       PUBLIC        RI
+  B:0098H.1       PUBLIC        TI
+  D:00D8H         PUBLIC        CCON
+  C:0026H         PUBLIC        main
+  D:0099H         PUBLIC        SBUF
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  D:008EH         PUBLIC        AUXR
+  D:008DH         PUBLIC        TH1
+  B:0020H.0       PUBLIC        rxc
+  D:008BH         PUBLIC        TL1
+  B:0088H.6       PUBLIC        TR1
+  C:0194H         PUBLIC        _uart_sendstring
+  D:0008H         PUBLIC        rx
+  C:01AAH         PUBLIC        isr_uart
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          MAIN
+  C:0026H         LINE#         28
+  C:0026H         LINE#         29
+  C:0026H         LINE#         30
+  C:0029H         LINE#         32
+  C:002CH         LINE#         33
+  C:002FH         LINE#         34
+  C:0032H         LINE#         35
+  C:0035H         LINE#         36
+  C:0037H         LINE#         37
+  C:0039H         LINE#         38
+  C:003BH         LINE#         40
+  C:003BH         LINE#         41
+  C:003BH         LINE#         42
+  C:003EH         LINE#         43
+  C:0040H         LINE#         44
+  C:0072H         LINE#         45
+  C:0072H         LINE#         46
+  C:0072H         LINE#         47
+  C:0078H         LINE#         48
+  C:007EH         LINE#         49
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  15:24:26  PAGE 3
+
+
+  C:007EH         LINE#         50
+  C:0080H         LINE#         51
+  C:0080H         LINE#         52
+  C:0080H         LINE#         53
+  C:0086H         LINE#         54
+  C:008CH         LINE#         55
+  C:008CH         LINE#         56
+  C:008EH         LINE#         57
+  C:008EH         LINE#         58
+  C:008EH         LINE#         59
+  C:0094H         LINE#         60
+  C:009AH         LINE#         61
+  C:009AH         LINE#         62
+  C:009CH         LINE#         63
+  C:009CH         LINE#         64
+  C:009CH         LINE#         65
+  C:00A2H         LINE#         66
+  C:00A8H         LINE#         67
+  C:00A8H         LINE#         68
+  C:00AAH         LINE#         69
+  C:00AAH         LINE#         70
+  C:00AAH         LINE#         71
+  C:00B0H         LINE#         72
+  C:00B6H         LINE#         73
+  C:00B6H         LINE#         74
+  C:00B8H         LINE#         75
+  C:00B8H         LINE#         76
+  C:00B8H         LINE#         77
+  C:00BEH         LINE#         78
+  C:00C4H         LINE#         79
+  C:00C4H         LINE#         80
+  C:00C6H         LINE#         81
+  C:00C6H         LINE#         82
+  C:00C6H         LINE#         83
+  C:00CCH         LINE#         84
+  C:00D2H         LINE#         85
+  C:00D2H         LINE#         86
+  C:00D4H         LINE#         87
+  C:00D4H         LINE#         88
+  C:00D4H         LINE#         89
+  C:00DAH         LINE#         90
+  C:00E0H         LINE#         91
+  C:00E0H         LINE#         92
+  C:00E2H         LINE#         93
+  C:00E2H         LINE#         94
+  C:00EBH         LINE#         95
+  C:00EBH         LINE#         96
+  C:00EBH         LINE#         97
+  C:00EDH         LINE#         98
+  C:00EDH         LINE#         99
+  -------         ENDPROC       MAIN
+  -------         PROC          ISR_UART
+  C:01AAH         LINE#         103
+  C:01AAH         LINE#         105
+  C:01ADH         LINE#         106
+  C:01ADH         LINE#         107
+  C:01AFH         LINE#         108
+BL51 BANKED LINKER/LOCATER V6.22                                                      06/24/2019  15:24:26  PAGE 4
+
+
+  C:01B2H         LINE#         109
+  C:01B4H         LINE#         110
+  C:01B6H         LINE#         111
+  C:01B6H         LINE#         112
+  -------         ENDPROC       ISR_UART
+  -------         PROC          _UART_SENDSTRING
+  D:0001H         SYMBOL        str
+  -------         DO            
+  D:0001H         SYMBOL        p
+  -------         ENDDO         
+  C:0194H         LINE#         115
+  C:0194H         LINE#         116
+  C:0194H         LINE#         118
+  C:0194H         LINE#         119
+  C:0199H         LINE#         120
+  C:0199H         LINE#         121
+  C:019BH         LINE#         122
+  C:019EH         LINE#         123
+  C:01A0H         LINE#         124
+  C:01A7H         LINE#         125
+  C:01A9H         LINE#         126
+  -------         ENDPROC       _UART_SENDSTRING
+  -------         ENDMOD        EX15
+
+  -------         MODULE        ?C?CLDPTR
+  C:0003H         PUBLIC        ?C?CLDPTR
+  -------         ENDMOD        ?C?CLDPTR
+
+Program Size: data=10.1 xdata=0 code=438
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

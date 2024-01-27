@@ -1,0 +1,176 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        12/14/2019  12:56:10  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE ex5.obj TO KEY_2 RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  ex5.obj (EX5)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  KEY_2 (EX5)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0003H     UNIT         ?DT?EX5
+            DATA    000BH     0003H     UNIT         _DATA_GROUP_
+            IDATA   000EH     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     008CH     UNIT         ?C_C51STARTUP
+            CODE    008FH     005AH     UNIT         ?PR?READ_KEY?EX5
+            CODE    00E9H     0059H     UNIT         ?PR?MAIN?EX5
+            CODE    0142H     000FH     UNIT         ?PR?CLS_BUZZ?EX5
+            CODE    0151H     000FH     UNIT         ?PR?CLS_LED?EX5
+            CODE    0160H     0008H     UNIT         ?C_INITSEG
+
+
+
+OVERLAY MAP OF MODULE:   KEY_2 (EX5)
+
+
+SEGMENT                          DATA_GROUP 
+  +--> CALLED SEGMENT          START    LENGTH
+----------------------------------------------
+?C_C51STARTUP                  -----    -----
+  +--> ?PR?MAIN?EX5
+  +--> ?C_INITSEG
+
+?PR?MAIN?EX5                   000BH    0003H
+  +--> ?PR?CLS_BUZZ?EX5
+  +--> ?PR?CLS_LED?EX5
+  +--> ?PR?READ_KEY?EX5
+
+
+
+SYMBOL TABLE OF MODULE:  KEY_2 (EX5)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+BL51 BANKED LINKER/LOCATER V6.22                                                      12/14/2019  12:56:10  PAGE 2
+
+
+  -------         MODULE        EX5
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  D:00A8H         PUBLIC        IE
+  D:00B8H         PUBLIC        IP
+  C:00E9H         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+  D:0088H         PUBLIC        TCON
+  B:00B0H.3       PUBLIC        P33
+  C:008FH         PUBLIC        read_key
+  C:0151H         PUBLIC        cls_led
+  D:00C8H         PUBLIC        T2CON
+  C:0142H         PUBLIC        cls_buzz
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          CLS_BUZZ
+  C:0142H         LINE#         19
+  C:0142H         LINE#         20
+  C:0142H         LINE#         21
+  C:014AH         LINE#         22
+  C:014DH         LINE#         23
+  C:0150H         LINE#         24
+  -------         ENDPROC       CLS_BUZZ
+  -------         PROC          CLS_LED
+  C:0151H         LINE#         27
+  C:0151H         LINE#         28
+  C:0151H         LINE#         29
+  C:0159H         LINE#         30
+  C:015CH         LINE#         31
+  C:015FH         LINE#         32
+  -------         ENDPROC       CLS_LED
+  -------         PROC          MAIN
+  -------         DO            
+  D:0007H         SYMBOL        temp
+  D:000BH         SYMBOL        mov
+  D:000CH         SYMBOL        scan_period
+  -------         ENDDO         
+  C:00E9H         LINE#         35
+  C:00E9H         LINE#         36
+  C:00E9H         LINE#         38
+  C:00ECH         LINE#         39
+  C:00F0H         LINE#         41
+  C:00F3H         LINE#         42
+  C:00F6H         LINE#         44
+  C:00F6H         LINE#         45
+  C:00F6H         LINE#         46
+  C:0107H         LINE#         47
+  C:010CH         LINE#         48
+  C:010FH         LINE#         49
+  C:0113H         LINE#         50
+  C:0113H         LINE#         51
+  C:0116H         LINE#         52
+  C:0126H         LINE#         53
+  C:012DH         LINE#         54
+  C:0130H         LINE#         55
+BL51 BANKED LINKER/LOCATER V6.22                                                      12/14/2019  12:56:10  PAGE 3
+
+
+  C:0130H         LINE#         56
+  C:0132H         LINE#         57
+  C:0135H         LINE#         58
+  C:0135H         LINE#         59
+  C:013DH         LINE#         60
+  C:0140H         LINE#         62
+  C:0140H         LINE#         63
+  C:0140H         LINE#         65
+  -------         ENDPROC       MAIN
+  -------         PROC          READ_KEY
+  -------         DO            
+  D:0008H         SYMBOL        press_counter
+  D:000AH         SYMBOL        status
+  D:0007H         SYMBOL        key_val
+  -------         ENDDO         
+  C:008FH         LINE#         69
+  C:008FH         LINE#         70
+  C:008FH         LINE#         73
+  C:0091H         LINE#         75
+  C:009DH         LINE#         76
+  C:009DH         LINE#         77
+  C:00A0H         LINE#         78
+  C:00A3H         LINE#         79
+  C:00A3H         LINE#         80
+  C:00A5H         LINE#         81
+  C:00A5H         LINE#         82
+  C:00A8H         LINE#         83
+  C:00B3H         LINE#         84
+  C:00BBH         LINE#         85
+  C:00BBH         LINE#         86
+  C:00BDH         LINE#         87
+  C:00C8H         LINE#         88
+  C:00CBH         LINE#         89
+  C:00CDH         LINE#         95
+  C:00CDH         LINE#         96
+  C:00D0H         LINE#         97
+  C:00DBH         LINE#         98
+  C:00DDH         LINE#         99
+  C:00DFH         LINE#         100
+  C:00E1H         LINE#         101
+  C:00E1H         LINE#         102
+  C:00E4H         LINE#         103
+  C:00E8H         LINE#         104
+  C:00E8H         LINE#         105
+  C:00E8H         LINE#         106
+  C:00E8H         LINE#         108
+  C:00E8H         LINE#         109
+  -------         ENDPROC       READ_KEY
+  -------         ENDMOD        EX5
+
+Program Size: data=15.0 xdata=0 code=360
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

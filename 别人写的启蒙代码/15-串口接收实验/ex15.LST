@@ -1,0 +1,154 @@
+C51 COMPILER V9.06   EX15                                                                  06/24/2019 15:24:26 PAGE 1   
+
+
+C51 COMPILER V9.06, COMPILATION OF MODULE EX15
+OBJECT MODULE PLACED IN ex15.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ex15.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：串口通讯实验
+   3          * 实验目的：1.掌握51单片机串口工作模式及相关寄存器配置方法
+   4          *           2.了解51单片机波特率的计算方法
+   5          *           3.掌握单片机串口接收中断服务函数的设计方法
+   6          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：通过串口调试助手发送数字1~8，板子上面的对应指示灯亮
+   8          * 硬件说明：IAP15F2K61S2@11.0592MHz     
+   9          * 程序说明：1.通过USB连接线连接PC机，在计算机硬件管理器中查看串口号
+  10          *           2.打开串口调试工具软件，并将串口通讯波特率设定为2400
+  11          *                       3.将跳线J13配置为MM模式
+  12          *                       4.输入1-8字符，控制8个LED指示灯状态
+  13          * 日期版本：2019-6-24/V2.0
+  14          *******************************************************************************/
+  15          
+  16          #include "STC15F2K60S2.h " //定义51单片机特殊功能寄存器
+  17          #include "absacc.h"
+  18          
+  19          #define BAUD           9600             //波特率
+  20          #define SYSTEMCLOCK  11059200L  //系统时钟频率
+  21          
+  22          bit rxc = 0; //数据接收标志位
+  23          char rx = '1';//接收到的数据
+  24          void uart_sendstring(unsigned char *str); //数据发送
+  25          
+  26          
+  27          //主函数
+  28          void main(void)
+  29          { 
+  30   1          SCON = 0x50;                
+  31   1      
+  32   1          AUXR = 0x40;                //1T
+  33   1          TMOD = 0x00;                //
+  34   1          TL1 = (65536 - (SYSTEMCLOCK/4/BAUD));   //
+  35   1          TH1 = (65536 - (SYSTEMCLOCK/4/BAUD))>>8;
+  36   1          TR1 = 1;  
+  37   1              ES = 1;
+  38   1              EA = 1;
+  39   1              
+  40   1          while(1)
+  41   1          {
+  42   2                      if(rxc == 1){
+  43   3                              rxc = 0;
+  44   3                              switch(rx){
+  45   4                                      case '1':
+  46   4                                      {
+  47   5                                              XBYTE[0x8000] = 0xFE;
+  48   5                                              uart_sendstring("1");   
+  49   5                                      }
+  50   4                                      break;          
+  51   4                                      case '2':
+  52   4                                      {
+  53   5                                              XBYTE[0x8000] = 0xFD;
+  54   5                                              uart_sendstring("2");
+  55   5                                      }
+C51 COMPILER V9.06   EX15                                                                  06/24/2019 15:24:26 PAGE 2   
+
+  56   4                                      break;
+  57   4                                      case '3':
+  58   4                                      {
+  59   5                                              XBYTE[0x8000] = 0xFB;
+  60   5                                              uart_sendstring("3");
+  61   5                                      }                                       
+  62   4                                      break;
+  63   4                                      case '4':
+  64   4                                      {
+  65   5                                              XBYTE[0x8000] = 0xF7;
+  66   5                                              uart_sendstring("4");
+  67   5                                      }
+  68   4                                      break;
+  69   4                                      case '5':
+  70   4                                      {
+  71   5                                              XBYTE[0x8000] = 0xEF;
+  72   5                                              uart_sendstring("5");
+  73   5                                      }
+  74   4                                      break;
+  75   4                                      case '6':
+  76   4                                      {
+  77   5                                              XBYTE[0x8000] = 0xDF;
+  78   5                                              uart_sendstring("6");
+  79   5                                      }
+  80   4                                      break;
+  81   4                                      case '7':
+  82   4                                      {
+  83   5                                              XBYTE[0x8000] = 0xBF;
+  84   5                                              uart_sendstring("7");
+  85   5                                      }
+  86   4                                      break;
+  87   4                                      case '8':
+  88   4                                      {
+  89   5                                              XBYTE[0x8000] = 0x7F;
+  90   5                                              uart_sendstring("8");
+  91   5                                      }
+  92   4                                      break;
+  93   4                                      default:
+  94   4                                              uart_sendstring("error\r\n");   //输入其他数据返回error
+  95   4                                      break;
+  96   4                              }
+  97   3                              ES = 1;
+  98   3                      }
+  99   2          }
+ 100   1      }
+ 101          
+ 102          //串口中断服务函数
+ 103          void isr_uart(void) interrupt 4
+ 104          {
+ 105   1          if(RI)
+ 106   1          {
+ 107   2                  RI = 0;  //清除接收标志位 
+ 108   2                  rx = SBUF;
+ 109   2                      ES = 0;
+ 110   2                      rxc = 1;
+ 111   2                }
+ 112   1      }
+ 113          
+ 114          //通过串口发送字符串
+ 115          void uart_sendstring(unsigned char *str)
+ 116          {
+ 117   1          unsigned char *p;   
+C51 COMPILER V9.06   EX15                                                                  06/24/2019 15:24:26 PAGE 3   
+
+ 118   1          p = str;
+ 119   1          while(*p != '\0')
+ 120   1          {
+ 121   2              SBUF = *p;
+ 122   2                      while(TI == 0);  //等待发送标志位置位
+ 123   2                      TI = 0;
+ 124   2              p++;
+ 125   2          }
+ 126   1      }
+ 127          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    237    ----
+   CONSTANT SIZE    =     24    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

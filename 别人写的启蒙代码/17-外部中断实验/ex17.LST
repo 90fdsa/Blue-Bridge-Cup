@@ -1,0 +1,87 @@
+C51 COMPILER V9.06   EX17                                                                  06/24/2019 15:35:52 PAGE 1   
+
+
+C51 COMPILER V9.06, COMPILATION OF MODULE EX17
+OBJECT MODULE PLACED IN ex17.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ex17.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************  
+   2          * 文件名称：外部中断实验
+   3          * 实验目的：1.掌握51单片机外部中断相关寄存器的配置方法和触发方式
+   4          *           2.掌握keil uVision 环境下外部中断服务函数的设计方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   6          * 实验现象：分别按S4、S5按键，对应led亮灭显示
+   7          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.按下P3.2-INT0引脚对应的按键S5，LED1状态反转
+   9          *           2.按下P3.3-INT1引脚对应的按键S4, LED2状态反转
+  10          * 日期版本：2019-6-24/V2.0 
+  11          *******************************************************************************/
+  12          
+  13          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  14          
+  15          
+  16          sbit LED1 = P0^0;
+  17          sbit LED2 = P0^1;
+  18          
+  19          void cls_buzz()
+  20          {
+  21   1              P2 = ((P2&0x1f)|0xA0); 
+  22   1              P0 = 0x00;
+  23   1              P2 &= 0x1f;
+  24   1      }
+  25          void cls_led()
+  26          {
+  27   1              P2 = ((P2&0x1f)|0x80); 
+  28   1              P0 = 0xFF;
+  29   1              P2 &= 0x1f;
+  30   1      }
+  31          
+  32          void main(void)
+  33          {
+  34   1          cls_buzz();
+  35   1              cls_led();
+  36   1              EX0 = 1;
+  37   1          IT0 = 1;  //边沿触发方式(下降沿)
+  38   1      
+  39   1          EX1 = 1;
+  40   1          IT1 = 1;  //边沿触发方式(下降沿)
+  41   1              
+  42   1          EA = 1;  //开启总中断
+  43   1          while(1);
+  44   1      }
+  45          
+  46          //外部中断0中断服务函数
+  47          void isr_intr_0(void) interrupt 0
+  48          { 
+  49   1      
+  50   1              P2 = ((P2&0x1f)|0x80);
+  51   1          LED1 = ~LED1;    
+  52   1              P2 = P2&0x1f;
+  53   1      }
+  54                                  
+  55          //外部中断1中断服务函数
+C51 COMPILER V9.06   EX17                                                                  06/24/2019 15:35:52 PAGE 2   
+
+  56          void isr_intr_1(void) interrupt 2
+  57          {
+  58   1              P2 = ((P2&0x1f)|0x80);
+  59   1          LED2 = ~LED2;    
+  60   1              P2 = P2&0x1f;
+  61   1      }
+  62          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     84    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
